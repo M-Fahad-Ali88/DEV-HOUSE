@@ -1,0 +1,7 @@
+1. Length (len)
+2. Lowercase (.lower())
+3. Uppercase (.upper())
+4. Find (.find('p ex')) show index number of an element.
+5. Replace (.replace('p','q'))
+6. Print('python' in course) = true
+7. Title (.title()) 
