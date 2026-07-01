@@ -1,0 +1,9 @@
+#identity
+a=(1,2,3)
+b=a
+print(a is b)
+
+#equality
+a=[1,2,3]
+b=[1,2,3]
+print(a==b)
