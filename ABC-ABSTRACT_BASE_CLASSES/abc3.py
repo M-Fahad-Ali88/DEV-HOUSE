@@ -18,8 +18,7 @@ class CSVProcessor(DataProcessor):
         print("laod CSV Data")
     def process_data(self):
         print("processing CSV Data")
-    def save_data(self):
-        print("save CSV Data")
+   
 
 csv  = CSVProcessor()
 csv.load_data()
