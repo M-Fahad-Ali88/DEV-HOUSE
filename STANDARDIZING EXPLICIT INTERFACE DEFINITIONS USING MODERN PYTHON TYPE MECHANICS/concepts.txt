@@ -1,0 +1,469 @@
+1. Type Hints ⭐⭐⭐⭐⭐
+
+What it is:
+A way to specify the expected type of variables, function parameters, and return values.
+
+You should know:
+
+Parameter type hints
+Return type hints
+Variable type hints
+Why type hints improve readability and reduce bugs
+2. Generics (TypeVar) ⭐⭐⭐⭐⭐
+
+What it is:
+Allows writing functions and classes that work with multiple types while preserving type information.
+
+You should know:
+
+What TypeVar is
+Why generics are used
+Generic functions
+Generic classes
+Type safety with generics
+3. Union (|) ⭐⭐⭐⭐☆
+
+What it is:
+Allows a value to be one of several types.
+
+You should know:
+
+int | float
+str | None
+Difference between one type and multiple allowed types
+Why Union is useful
+4. Optional ⭐⭐⭐⭐☆
+
+What it is:
+Represents a value that may be None.
+
+You should know:
+
+Optional[str]
+str | None (modern syntax)
+When Optional should be used
+5. Callable ⭐⭐⭐⭐☆
+
+What it is:
+Represents a function passed as an argument or returned from another function.
+
+You should know:
+
+Function signatures
+Callback functions
+Parameter types
+Return types
+6. Typed Data Structures ⭐⭐⭐⭐⭐
+
+What it is:
+Using structured types instead of raw dictionaries.
+
+You should know:
+
+Why raw dictionaries are risky
+TypedDict
+dataclass
+NamedTuple
+Custom classes
+Stringly-typed access bugs
+7. Static Type Checking ⭐⭐⭐⭐⭐
+
+What it is:
+Checking types before running the program.
+
+You should know:
+
+Runtime checking vs static checking
+Why static analysis is useful
+How type errors are detected
+8. mypy ⭐⭐⭐⭐☆
+
+What it is:
+Python's most popular static type checker.
+
+You should know:
+
+Purpose of mypy
+How it analyzes code
+Why professionals use it
+What "strict mode" means
+9. Strict Mode ⭐⭐⭐⭐☆
+
+What it is:
+A configuration that enforces rigorous type checking.
+
+You should know:
+
+Missing type annotations
+Return type enforcement
+Unsafe Any
+Detecting None issues
+Type consistency
+10. Utility Modules ⭐⭐⭐☆☆
+
+What it is:
+Python files that contain reusable helper functions.
+
+You should know:
+
+Why utility modules are used
+Applying type hints consistently across modules
+11. Interface Definitions ⭐⭐⭐⭐⭐
+
+What it is:
+A clear contract describing what a function or class accepts and returns.
+
+You should know:
+
+Input types
+Output types
+Benefits of explicit interfaces
+Self-documenting code
+12. Stringly-Typed Code ⭐⭐⭐⭐☆
+
+What it is:
+Code that relies heavily on string keys (such as raw dictionaries), making it prone to typos and runtime errors.
+
+You should know:
+
+Why it's considered bad practice
+How typed structures solve the problem
+Concepts to Prioritize
+
+If you're short on time, study these in order:
+
+Type Hints (variables, parameters, return types)
+Generics (TypeVar)
+Union (|)
+Optional
+Callable
+Typed Structures (TypedDict, dataclass, NamedTuple)
+mypy and Strict Mode
+Static Type Checking
+Stringly-Typed Access Bugs
+Explicit Interface Definitions
+
+These ten concepts cover almost everything required to understand and implement the tasks in your daily assignment.
+
+
+
+1. Type Hints
+
+Type hints ka matlab hai ke hum Python ko batate hain ke variable ya function kis type ka data use karega.
+
+Jaise:
+
+int
+str
+float
+bool
+
+Is se programmer ko foran pata chal jata hai ke function kis type ka input expect kar raha hai aur kya return karega.
+
+2. Generics (TypeVar)
+
+TypeVar ka use tab hota hai jab ek hi function multiple data types ke sath kaam kar sakta ho.
+
+Misal ke taur par ek function integer list aur string list dono ke liye kaam kare.
+
+Is se:
+
+Code dobara likhne ki zarurat nahi hoti.
+Function reusable ban jata hai.
+Type safety bhi maintain rehti hai.
+3. Union (|)
+
+Union ka matlab hai ke ek variable ya parameter ek se zyada data types accept kar sakta hai.
+
+Misal:
+
+int | float
+
+Yani function integer bhi le sakta hai aur float bhi.
+
+Is se function flexible ban jata hai.
+
+4. Optional
+
+Optional ka matlab hai ke value ho bhi sakti hai aur nahi bhi.
+
+Python mein iska matlab hota hai:
+
+str | None
+
+Yani agar user name provide kare to string milegi, warna None bhi acceptable hai.
+
+Ye missing values ko safely handle karne ke liye use hota hai.
+
+5. Callable
+
+Callable ka matlab hai ke ek function ko doosre function ke argument ke taur par pass karna.
+
+Yani function data ke bajaye kisi aur function ko receive kare aur usay execute kare.
+
+Ye callbacks aur reusable operations ke liye use hota hai.
+
+6. Utility Modules
+
+Utility modules wo Python files hoti hain jin mein reusable helper functions rakhe jate hain.
+
+Misal:
+
+math_utils.py
+string_utils.py
+
+Har module ka apna specific purpose hota hai aur un mein type hints use kiye jate hain taake code organized aur maintainable rahe.
+
+Is Task Ka Faida
+
+Ye task humein sikhata hai ke:
+
+Code ko readable kaise banaya jaye.
+Functions ke inputs aur outputs ko clearly define kaise kiya jaye.
+Type-related bugs ko pehle hi detect kaise kiya jaye.
+Reusable aur maintainable code kaise likha jaye.
+Modern Python development practices ko follow kaise kiya jaye.
+Learning Outcome
+
+Is task ke baad aap:
+
+Type hints ka use karna seekh jaoge.
+TypeVar ki madad se generic functions bana sakoge.
+Union (|) se multiple data types handle kar sakoge.
+Optional ki madad se None values ko safely manage kar sakoge.
+Callable ke zariye functions ko arguments ke taur par pass kar sakoge.
+Utility modules mein reusable aur type-safe functions organize kar sakoge.
+
+Simple words mein: Is task ka maqsad Python code ko professional, readable, reusable, aur error-free banana hai.
+
+
+
+
+
+
+
+
+For Task 2:
+
+Enforce strict type checking across their local environment using mypy configured on strict mode.
+
+These are the important concepts used:
+
+1. Static Type Checking ⭐⭐⭐⭐⭐
+Checking type errors before running the program.
+Performed by mypy.
+2. mypy ⭐⭐⭐⭐⭐
+A static type checker for Python.
+Reads type hints and detects type-related errors.
+
+Example:
+
+pip install mypy
+3. Strict Mode ⭐⭐⭐⭐⭐
+Enables the strictest type checking rules.
+
+Example (mypy.ini):
+
+[mypy]
+strict = True
+4. Type Hints ⭐⭐⭐⭐⭐
+Specify types for:
+Variables
+Function parameters
+Return values
+
+Example:
+
+def add(a: int, b: int) -> int:
+    return a + b
+5. Function Return Type Annotation ⭐⭐⭐⭐☆
+
+Every function should specify what it returns.
+
+Example:
+
+def greet(name: str) -> str:
+    return f"Hello {name}"
+6. Parameter Type Annotation ⭐⭐⭐⭐☆
+
+Every function parameter should have a type.
+
+Example:
+
+def divide(a: float, b: float):
+7. Optional ⭐⭐⭐⭐☆
+
+When a function may return None.
+
+Example:
+
+from typing import Optional
+
+def divide(a: float, b: float) -> Optional[float]:
+8. None Type ⭐⭐⭐☆☆
+
+Understanding when a function can return None.
+
+Example:
+
+if b == 0:
+    return None
+9. Main Function ⭐⭐⭐☆☆
+
+Organizing code using a main() function.
+
+Example:
+
+def main() -> None:
+10. if __name__ == "__main__" ⭐⭐⭐☆☆
+
+Ensures the program runs only when executed directly.
+
+Example:
+
+if __name__ == "__main__":
+    main()
+11. Type Safety ⭐⭐⭐⭐⭐
+
+Making sure values match their declared types.
+
+Example:
+
+add(10, 20)      # Correct
+add("10", 20)    # Type error
+12. Running mypy ⭐⭐⭐⭐⭐
+
+Checking a file:
+
+mypy --strict example.py
+
+Checking an entire project:
+
+mypy --strict .
+13. Type Errors ⭐⭐⭐⭐☆
+
+Examples of errors mypy detects:
+
+Wrong argument types
+Missing return type annotations
+Returning the wrong type
+Incompatible assignments
+Missing type hints (in strict mode)
+Most Important Concepts for Task 2
+
+If your instructor asks "What concepts are used in Task 2?", answer:
+
+Static Type Checking
+mypy
+Strict Mode
+Type Hints
+Parameter Type Annotations
+Return Type Annotations
+Optional
+None
+Type Safety
+mypy Configuration (mypy.ini)
+Running mypy --strict
+Type Error Detection
+
+These concepts together explain how mypy in strict mode helps detect type-related issues before the program is executed.
+
+
+
+
+
+
+
+For Task 3, these are the important concepts used in the code:
+
+Concepts Used
+1. Refactoring
+Improving the internal structure of code without changing its behavior.
+Converting raw dictionary returns into a better data structure.
+2. Raw Dictionary
+Returning data using a normal Python dictionary.
+
+Example:
+
+{
+    "name": "Fahad",
+    "age": 22,
+    "cgpa": 3.85
+}
+Problem: Relies on string keys.
+3. Stringly-Typed Access Bugs
+Errors caused by misspelling dictionary keys.
+
+Example:
+
+student["nmae"]
+
+instead of:
+
+student["name"]
+Results in a KeyError.
+4. Typed Structures
+Data structures with predefined fields and types.
+Examples:
+@dataclass ✅ (used in your code)
+TypedDict
+NamedTuple
+Custom classes
+5. Dataclass
+Creates classes with less boilerplate code.
+Automatically generates methods like __init__() and __repr__().
+Stores structured data in a clean and readable way.
+6. Type Hints
+Defining the type of each attribute and function return value.
+
+Example:
+
+name: str
+age: int
+cgpa: float
+7. Function Return Type Annotation
+Specifying what a function returns.
+
+Example:
+
+def get_student() -> Student:
+    ...
+8. Object Access vs Dictionary Access
+
+Dictionary Access
+
+student["name"]
+
+Object Access
+
+student.name
+
+Object access is cleaner, safer, and supported by IDE autocomplete.
+
+9. Type Safety
+Ensures values match their expected types.
+Helps tools like mypy detect mistakes before runtime.
+10. IDE Autocompletion
+When using a typed structure, IDEs can suggest:
+student.name
+student.age
+student.cgpa
+
+This reduces typing mistakes.
+
+Most Important Concepts (Exam/Interview)
+
+If your instructor asks about the key ideas behind this task, focus on these:
+
+Refactoring
+Raw Dictionary
+Stringly-Typed Access Bugs
+Typed Structures
+Dataclass
+Type Hints
+Function Return Type Annotations
+Type Safety
+Object Attribute Access
+IDE Autocompletion
+
+These concepts explain why replacing raw dictionaries with typed structures makes Python code more readable, maintainable, and less error-prone.
