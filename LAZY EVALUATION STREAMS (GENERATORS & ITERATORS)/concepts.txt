@@ -1,0 +1,49 @@
+Topic Concepts (One Line Each)
+Iterator – An object that returns one item at a time.
+Iterable – Any object capable of producing an iterator.
+__iter__ – Returns the iterator object itself.
+__next__ – Returns the next value and raises StopIteration when finished.
+Generator – A function that produces values lazily using yield.
+yield – Pauses function execution and returns one value at a time.
+Lazy Evaluation – Computes values only when they are needed.
+State Tracking – Maintaining the current iteration position internally.
+Memory Efficiency – Using minimal memory by generating values on demand.
+Iterator Protocol – The rules requiring __iter__ and __next__ methods.
+
+Day 4 - Task 1: CustomIterator.py
+Understanding
+class NumberIterator defines a custom iterator.
+__init__() stores the starting and ending values.
+__iter__() returns the iterator object itself.
+__next__() returns one value at a time.
+if self.current > self.end: checks whether iteration is complete.
+raise StopIteration tells Python that there are no more values.
+number = self.current stores the current value.
+self.current += 1 moves to the next value.
+return number returns the current number.
+The for loop automatically calls __iter__() once and __next__() repeatedly until StopIteration is raised.
+
+Main Concept: Iterators maintain their own state and generate values one at a time.
+
+Day 4 - Task 2: LazyEventGenerator.py
+Understanding
+import sys imports the module used to measure object memory.
+event_generator() is a generator function because it uses yield.
+for i in range(limit): loops through the required number of events.
+yield returns one event and pauses execution.
+When next() is called again, execution resumes from the previous yield.
+limit = 1_000_000 specifies one million events.
+generator = event_generator(limit) creates the generator object without generating all events immediately.
+event_list = [...] creates all one million events in memory at once.
+sys.getsizeof(generator) measures the memory used by the generator object.
+sys.getsizeof(event_list) measures the memory used by the list container.
+next(generator) retrieves the next event without storing all events in memory.
+
+Main Concept: Generators use lazy evaluation, producing values only when requested, which makes them much more memory-efficient than lists.
+
+Overall Learning
+Code	What You Learn
+SingletonCoordinator.py	How __new__ controls object creation and enforces the Singleton pattern.
+ObjectRepresentation.py	How __repr__ and __str__ customize object representation for developers and users.
+CustomIterator.py	How to build a custom iterator using __iter__ and __next__.
+LazyEventGenerator.py	How generators use yield to produce values lazily and save memory compared to lists.

@@ -1,0 +1,465 @@
+DECLARATIVE RUNTIME VALIDATION USING PYDANTIC V2
+MAIN MOTIVE OF THIS TOPIC
+
+The main purpose of Declarative Runtime Validation using Pydantic v2 is to ensure that incoming data is correct, clean, secure, and follows predefined rules before it is used by an application. Instead of manually checking every field, developers declare validation rules inside models, and Pydantic automatically validates data at runtime.
+
+THEORETICAL CONCEPTS
+1. Runtime Validation
+Definition
+
+Runtime validation is the process of checking whether data is valid while the program is running.
+
+Purpose
+Prevent invalid data from entering the application.
+Detect incorrect input immediately.
+Improve application reliability.
+Reduce unexpected runtime errors.
+2. Declarative Validation
+Definition
+
+Declarative validation means describing validation rules inside a model instead of writing manual checking code.
+
+Rather than writing many if statements, developers declare rules using fields, types, and validators.
+
+Advantages
+Cleaner code
+Easier maintenance
+Automatic validation
+Better readability
+TASK 1
+BUILD BASEMODEL SCHEMAS FOR INCOMING HIGHLY NESTED JSON USER ONBOARDING PAYLOADS
+1. What is BaseModel?
+Definition
+
+BaseModel is the fundamental class in Pydantic used to define the structure of expected data.
+
+It acts as a blueprint describing:
+
+required fields
+optional fields
+nested objects
+data types
+validation rules
+2. Data Schema
+
+A schema is a formal description of data.
+
+It specifies
+
+field names
+field types
+required values
+optional values
+nested structures
+
+Example concept
+
+User
+ ├── name
+ ├── age
+ ├── email
+ └── address
+        ├── city
+        ├── country
+        └── zipcode
+3. Nested JSON
+
+Nested JSON contains objects inside objects.
+
+Example concept
+
+User
+ ├── Personal Information
+ ├── Address
+ │      ├── City
+ │      ├── Country
+ │      └── Zip
+ └── Company
+        ├── Name
+        └── Department
+
+Large applications frequently receive deeply nested JSON.
+
+4. User Onboarding Payload
+
+An onboarding payload is the complete information submitted when creating a new account.
+
+It may include
+
+Personal details
+Address
+Company information
+Contact information
+Emergency contacts
+Preferences
+Security settings
+5. Nested Models
+
+Instead of one huge model, large schemas are divided into multiple smaller models.
+
+Benefits
+
+Reusability
+Better organization
+Easier maintenance
+Improved readability
+6. Field Types
+
+Pydantic supports many field types.
+
+Examples include
+
+String
+Integer
+Float
+Boolean
+List
+Dictionary
+Nested Model
+Optional values
+Union types
+Enum values
+7. Required Fields
+
+Required fields must always be provided.
+
+Missing required fields immediately trigger validation errors.
+
+8. Optional Fields
+
+Optional fields may or may not exist.
+
+Useful when users are not required to provide certain information.
+
+9. Default Values
+
+Fields may automatically receive default values when omitted.
+
+This reduces missing-data problems.
+
+10. Strict Type Enforcement
+
+Pydantic ensures values match expected types.
+
+Examples
+
+integer
+string
+boolean
+list
+
+Invalid types generate validation errors.
+
+11. Model Composition
+
+Large applications create models from smaller models.
+
+Example concept
+
+UserModel
+
+contains
+
+PersonalInfo
+Address
+Employment
+Preferences
+Security
+
+This makes systems modular.
+
+TASK 2
+IMPLEMENT CUSTOM @field_validator AND @model_validator FUNCTIONS TO HANDLE SANITIZATION AND BUSINESS-LOGIC RULES
+1. Validators
+
+Validators are special functions executed automatically during validation.
+
+Their job is to
+
+inspect data
+clean data
+reject invalid values
+enforce business rules
+2. @field_validator
+Definition
+
+A field validator validates one field at a time.
+
+It runs before or after normal validation depending on configuration.
+
+Responsibilities
+Remove whitespace
+Normalize text
+Validate format
+Check ranges
+Convert values
+Reject invalid input
+3. Field Sanitization
+
+Sanitization means cleaning data before storing it.
+
+Examples
+
+Remove leading spaces
+Remove trailing spaces
+Convert uppercase to lowercase
+Remove unwanted characters
+Normalize formatting
+
+Purpose
+
+Keep database consistent
+Prevent duplicate records
+Improve searching
+4. Email Normalization
+
+Email normalization ensures all emails follow one standard format.
+
+Typical operations
+
+lowercase conversion
+trimming whitespace
+removing accidental spaces
+
+Purpose
+
+ABC@EMAIL.COM
+
+and
+
+abc@email.com
+
+become identical.
+5. Phone Number Validation
+
+Phone validation ensures numbers satisfy predefined rules.
+
+Typical checks
+
+Correct length
+Numeric characters
+Country code
+Allowed symbols
+Formatting
+6. @model_validator
+Definition
+
+A model validator validates the entire model after individual fields are validated.
+
+It has access to every field simultaneously.
+
+7. Cross-field Validation
+
+Some rules depend on multiple fields.
+
+Examples
+
+Password equals confirmation
+Start date before end date
+Age matches birth date
+Country matches phone code
+
+These cannot be handled by a single field validator.
+
+8. Business Logic Validation
+
+Business rules are application-specific rules beyond data types.
+
+Examples
+
+Username must be unique
+Age must be at least 18
+Employee ID required for staff
+Premium users require payment details
+
+Business rules differ from syntax validation.
+
+9. Validation Order
+
+Pydantic validates data in stages.
+
+General sequence
+
+Receive raw input
+Type conversion
+Field validation
+Model validation
+Return validated model
+10. Validation Errors
+
+Instead of crashing, Pydantic returns structured validation errors containing
+
+field name
+invalid value
+expected type
+explanation
+
+This greatly improves debugging.
+
+TASK 3
+TEST EDGE-CASE TYPE COERCIONS TO ENSURE VALIDATION FAILS PREDICTABLY
+1. Edge Cases
+
+Edge cases are unusual or extreme inputs that are still possible.
+
+Examples
+
+Empty strings
+Missing fields
+Negative ages
+Very long text
+Null values
+Incorrect data types
+
+Testing them improves application robustness.
+
+2. Type Coercion
+
+Type coercion means automatically converting compatible values.
+
+Examples
+
+"25"
+
+↓
+
+25
+"true"
+
+↓
+
+True
+"3.5"
+
+↓
+
+3.5
+3. Stringified Numbers
+
+Sometimes APIs send numbers as strings.
+
+Example
+
+Age
+
+"20"
+
+instead of
+
+20
+
+Pydantic attempts safe conversion when appropriate.
+
+4. Missing Nested Fields
+
+Nested objects may omit required information.
+
+Example concept
+
+Address
+
+City ✓
+Country ✓
+Zip ❌ Missing
+
+Pydantic reports exactly which nested field is missing.
+
+5. Predictable Validation Failures
+
+Validation should fail consistently and clearly.
+
+Good validation
+
+identifies the exact field
+explains the reason
+avoids ambiguous messages
+prevents partial processing
+6. Exception Handling
+
+Validation errors should be caught gracefully.
+
+Instead of crashing
+
+Program Stops
+
+the application reports meaningful validation errors.
+
+7. ValidationError
+
+Pydantic raises a structured ValidationError whenever validation fails.
+
+It contains
+
+field location
+error message
+error type
+invalid value
+
+This makes debugging easier.
+
+8. Defensive Programming
+
+Validation is part of defensive programming.
+
+The application assumes incoming data may be incorrect and verifies it before processing.
+
+Benefits
+
+Prevent crashes
+Improve security
+Improve stability
+Better user feedback
+9. Data Integrity
+
+Data integrity ensures stored information remains
+
+accurate
+complete
+consistent
+valid
+
+Validation is the first line of defense for maintaining data integrity.
+
+10. Error Reporting
+
+Good validation systems produce errors that are
+
+clear
+specific
+structured
+actionable
+
+This helps developers quickly identify and fix issues.
+
+KEY CONCEPTS TO REMEMBER
+Declarative Runtime Validation
+Pydantic v2
+BaseModel
+Runtime Validation
+Declarative Validation
+Data Schema
+Nested JSON
+Nested Models
+User Onboarding Payload
+Required Fields
+Optional Fields
+Default Values
+Field Types
+Type Enforcement
+Validators
+@field_validator
+@model_validator
+Field Sanitization
+Email Normalization
+Phone Number Validation
+Cross-field Validation
+Business Logic Validation
+Validation Order
+ValidationError
+Type Coercion
+Stringified Numbers
+Missing Nested Fields
+Edge Cases
+Defensive Programming
+Data Integrity
+Error Reporting

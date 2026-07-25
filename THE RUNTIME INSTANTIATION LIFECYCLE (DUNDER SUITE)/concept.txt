@@ -1,0 +1,45 @@
+Topic Concepts (One Line Each)
+__new__ – Creates and returns a new object before initialization.
+__init__ – Initializes an object after it has been created.
+__call__ – Makes an object behave like a function.
+__repr__ – Returns the official string representation of an object for debugging.
+__str__ – Returns the user-friendly string representation of an object.
+Singleton Pattern – Ensures that only one instance of a class exists throughout the program.
+Object Allocation – The process of reserving memory for a new object.
+Memory Instantiation – Creating an object in memory before initialization.
+Structural Equality – Comparing objects based on their internal data rather than identity.
+Object Representation – Displaying objects in readable or developer-friendly formats.
+
+Day 3 - Task 1: SingletonCoordinator.py
+Understanding
+class PipelineCoordinator: creates a new class.
+_instance = None is a class variable that stores the single object.
+__new__() executes before __init__() and controls object creation.
+if cls._instance is None: checks whether an object already exists.
+super().__new__(cls) allocates memory and creates the object.
+cls._instance = ... saves the created object for future use.
+If an object already exists, the same object is returned instead of creating another.
+__init__() initializes the object's attributes (status).
+obj1 and obj2 both reference the same object.
+obj1 is obj2 verifies that both variables point to the exact same instance.
+
+Main Concept: __new__ controls object creation, making it possible to implement the Singleton pattern.
+
+Day 3 - Task 2: ObjectRepresentation.py
+Understanding
+__init__() initializes the student's data.
+__repr__() returns the official representation of the object for developers and debugging.
+__str__() returns a readable representation for end users.
+repr(student) explicitly calls __repr__().
+str(student) explicitly calls __str__().
+print(student) automatically calls __str__() if it exists; otherwise, it falls back to __repr__().
+Custom representations make objects easier to understand when printed or debugged.
+
+Main Concept: __repr__ is for developers, while __str__ is for users.
+
+Overall Learning
+Code	What You Learn
+SingletonCoordinator.py	How __new__ controls object creation and enforces the Singleton pattern.
+ObjectRepresentation.py	How __repr__ and __str__ customize object representation for developers and users.
+CustomIterator.py	How to build a custom iterator using __iter__ and __next__.
+LazyEventGenerator.py	How generators use yield to produce values lazily and save memory compared to lists.
