@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 CAPTCHA SOLVER - Template Matching (Auto-Detect Character Count)
-Now automatically determines number of characters - no need for --chars!
+Saves recognized text as an image automatically.
 """
 
 import sys
@@ -66,7 +66,6 @@ def estimate_char_count(binary):
     x, y, w, h = cv2.boundingRect(coords)
     ratio = w / h
     
-    # Rough estimate based on width-to-height ratio
     if ratio > 3.5:
         estimated = 9
     elif ratio > 3.0:
@@ -82,6 +81,7 @@ def estimate_char_count(binary):
     print(f"  Tip: Use --chars N if this is wrong")
     
     return estimated
+
 
 def segment(binary, num_chars):
     """Phase 2: Sliding window segmentation."""
@@ -271,75 +271,101 @@ class CaptchaSolver:
             print(f"SOLVING: {Path(image_path).name}")
             print("=" * 60)
         
-        # Preprocess
         binary = preprocess(image_path)
         if binary is None:
             return "?"
         
-        # Auto-detect character count if not specified
-        if num_chars is None:
-            num_chars = estimate_char_count(binary)
-        
-        if verbose:
-            print(f"  Using {num_chars} characters")
-        
-        # Segment
-        chars = segment(binary, num_chars)
-        
-        if not chars:
-            print("  ❌ Segmentation failed")
-            return "?"
-        
-        # Match each character
-        result = []
-        all_scores = []
-        
-        if verbose:
-            print(f"\n  Character Matches:")
-            print("  " + "-" * 50)
-        
-        for i, char_img in enumerate(chars):
-            matches = self.database.match(char_img, top_k=3)
+        if num_chars is not None:
+            chars = segment(binary, num_chars)
+            if not chars:
+                return "?"
             
-            best_char, best_score = matches[0]
-            result.append(best_char)
-            all_scores.append(best_score)
+            result = []
+            all_scores = []
+            
+            for char_img in chars:
+                matches = self.database.match(char_img, top_k=1)
+                best_char, best_score = matches[0]
+                result.append(best_char)
+                all_scores.append(best_score)
+            
+            text = ''.join(result)
+            avg_score = np.mean(all_scores)
             
             if verbose:
-                bar = '█' * int(best_score * 20)
-                print(f"  [{i+1}] -> '{best_char}' ({best_score:.0%}) {bar}")
-        
-        text = ''.join(result)
-        avg_score = np.mean(all_scores)
+                print(f"  Characters: {num_chars}")
+                for i, (c, s) in enumerate(zip(result, all_scores)):
+                    bar = '█' * int(s * 20)
+                    print(f"  [{i+1}] -> '{c}' ({s:.0%}) {bar}")
+                print(f"\n📝 RESULT: {text} (confidence: {avg_score:.1%})")
+            
+            return text
         
         if verbose:
-            print("\n" + "=" * 60)
-            print(f"📝 RESULT: {text}")
-            print(f"   Confidence: {avg_score:.1%}")
-            print("=" * 60)
+            print("  Auto-detecting character count...")
+            print("  Trying counts 4-100 (this may take a moment)...")
         
-        return text
+        best_text = ""
+        best_avg_score = 0
+        best_num = 7
+        
+        for count in range(4, 101, 2):
+            chars = segment(binary, count)
+            if not chars:
+                continue
+            
+            result = []
+            all_scores = []
+            
+            for char_img in chars:
+                matches = self.database.match(char_img, top_k=1)
+                best_char, best_score = matches[0]
+                result.append(best_char)
+                all_scores.append(best_score)
+            
+            avg_score = np.mean(all_scores)
+            adjusted_score = avg_score
+            
+            if adjusted_score > best_avg_score:
+                best_avg_score = adjusted_score
+                best_text = ''.join(result)
+                best_num = count
+        
+        if verbose:
+            print(f"\n  Best match: {best_num} characters")
+            print(f"📝 RESULT: {best_text}")
+            print(f"   Confidence: {best_avg_score:.1%}")
+        
+        return best_text
+
+
+def save_result_as_image(text, output_path="result.png"):
+    """Save the recognized text as an image."""
+    img_width = len(text) * 60 + 40
+    img_height = 100
+    img = np.ones((img_height, img_width), dtype=np.uint8) * 255
+    cv2.putText(img, text, (20, 65), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 0), 3)
+    cv2.imwrite(output_path, img)
+    print(f"✅ Result saved as image: {output_path}")
+    return output_path
 
 
 # ======================== COMMAND LINE ========================
 if __name__ == "__main__":
     print("=" * 60)
-    print("CAPTCHA SOLVER - Template Matching (Auto-Detect)")
+    print("CAPTCHA SOLVER - Template Matching")
     print("=" * 60)
     
     if len(sys.argv) < 2:
         print("\nUsage:")
         print("  1. Build templates:")
-        print("     python template_solver.py --build <data_dir>")
+        print("     python captcha_solver.py --build <data_dir>")
         print()
-        print("  2. Solve (auto-detect chars):")
-        print("     python template_solver.py --solve <image>")
+        print("  2. Solve CAPTCHA:")
+        print("     python captcha_solver.py --solve <image> --chars N")
         print()
-        print("  3. Solve (specify chars):")
-        print("     python template_solver.py --solve <image> --chars 7")
-        print()
-        print("  4. Build then solve:")
-        print("     python template_solver.py --build <data_dir> --solve <image>")
+        print("  3. Build then solve:")
+        print("     python captcha_solver.py --build <data_dir> --solve <image> --chars N")
         sys.exit(0)
     
     solver = CaptchaSolver()
@@ -363,3 +389,7 @@ if __name__ == "__main__":
         if image_path:
             text = solver.solve(image_path, num_chars)
             print(f"\n✅ Final: {text}")
+            
+            # Save result as image
+            output_name = f"result_{Path(image_path).stem}.png"
+            save_result_as_image(text, output_name)
