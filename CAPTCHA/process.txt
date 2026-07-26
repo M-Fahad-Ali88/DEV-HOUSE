@@ -1,0 +1,75 @@
+PHASE 1: PREPROCESSING (Every solve)
+text
+Input Image (colored CAPTCHA)
+        ↓
+Convert to HSV color space
+        ↓
+Extract Saturation channel (text stands out)
+        ↓
+CLAHE contrast enhancement
+        ↓
+Bilateral filter (denoise)
+        ↓
+Otsu thresholding (black & white)
+        ↓
+Invert if needed (white text on black)
+        ↓
+Morphological close (fill gaps)
+        ↓
+Output: Clean binary image
+✂️ PHASE 2: SEGMENTATION
+text
+Binary image
+        ↓
+Find text bounding box
+        ↓
+Calculate window width = text_width / num_chars
+        ↓
+Slide window across text with 33% overlap
+        ↓
+Crop each window
+        ↓
+Add padding + resize to 56×56 pixels
+        ↓
+Output: List of character images
+🧠 PHASE 3: TEMPLATE MATCHING (Recognition)
+text
+For each character image:
+        ↓
+    Compare against EVERY stored template
+        ↓
+    For each template character ('a', 'b', 'c'...):
+        Compare against all examples of that character
+        ↓
+        cv2.matchTemplate() → similarity score
+        ↓
+    Keep the highest score for each character
+        ↓
+    Pick the character with the BEST overall score
+        ↓
+Output: Recognized character
+📝 FINAL OUTPUT
+text
+All recognized characters joined together
+        ↓
+"msmnmix"
+        ↓
+Save as result_msmnmix.png
+Visual Flow
+text
+msmnmix.jfif  →  🔍 Preprocess  →  ✂️ Segment  →  🧠 Match  →  "msmnmix"
+   (image)        (clean binary)    (7 windows)    (templates)    (text output)
+The Template Matching (Heart of the System)
+text
+Character image:  ██▓▓██
+                   ██▓▓██
+                   
+Compare with:
+  Template 'm': ██▓▓██  → Score: 100% ✅
+  Template 's': ▓▓██▓▓  → Score: 45%  
+  Template 'n': █▓▓██▓  → Score: 30%
+  ...
+
+Result: 'm' (best match)
+That's the complete process! Preprocess → Segment → Match → Output.
+
