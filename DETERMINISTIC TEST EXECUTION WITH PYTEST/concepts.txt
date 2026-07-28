@@ -1,0 +1,595 @@
+DETERMINISTIC TEST EXECUTION WITH PYTEST
+
+Deterministic testing means a test always produces the same output when given the same input and environment. A good test should never randomly pass or fail. Pytest provides powerful tools like fixtures, parameterization, and configuration files to make testing reliable, organized, and scalable.
+
+1. PYTEST
+Definition
+
+Pytest is one of the most popular Python testing frameworks used to write, organize, and execute automated tests.
+
+Instead of manually running your code every time you make changes, pytest automatically checks whether your program still works correctly.
+
+Example
+def add(a, b):
+    return a + b
+
+def test_add():
+    assert add(2, 3) == 5
+
+Run:
+
+pytest
+
+Output
+
+1 passed
+2. DETERMINISTIC TESTING
+Definition
+
+A deterministic test always produces the same result every time it runs.
+
+If a test passes today, it should also pass tomorrow unless the code changes.
+
+Good Example
+assert 5 + 5 == 10
+
+This always passes.
+
+Bad Example
+import random
+
+assert random.randint(1,10) == 5
+
+Sometimes passes.
+Sometimes fails.
+
+This is non-deterministic.
+
+3. TESTS DIRECTORY STRUCTURE
+
+Instead of mixing tests with application code, pytest projects usually follow this structure.
+
+Project/
+
+│
+├── app/
+│   ├── calculator.py
+│   └── utils.py
+│
+├── tests/
+│   ├── test_calculator.py
+│   ├── test_utils.py
+│   └── conftest.py
+│
+├── pytest.ini
+└── requirements.txt
+Why?
+Easy to locate tests
+Better project organization
+Easier maintenance
+Automatic test discovery
+4. PYTEST.INI
+Definition
+
+pytest.ini stores global pytest settings.
+
+Instead of writing long commands every time, configuration is stored once.
+
+Example
+
+[pytest]
+testpaths = tests
+python_files = test_*.py
+
+Now pytest automatically looks inside
+
+tests/
+
+for files beginning with
+
+test_
+5. STRICT WARNING FLAGS
+
+Sometimes your code produces warnings.
+
+Example
+
+DeprecationWarning
+
+Normally pytest shows the warning but still passes.
+
+Strict mode converts warnings into failures.
+
+Example
+
+[pytest]
+filterwarnings =
+    error
+
+Now
+
+DeprecationWarning
+
+becomes
+
+FAILED
+
+This helps detect future problems early.
+
+6. STRICT MARKER VALIDATION
+
+Pytest allows custom markers.
+
+Example
+
+@pytest.mark.database
+
+If you accidentally write
+
+@pytest.mark.databse
+
+(pytest typo)
+
+Without strict markers
+
+No error
+
+With strict markers
+
+Unknown marker
+
+This prevents spelling mistakes.
+
+7. TEST DISCOVERY
+
+Pytest automatically finds tests.
+
+It searches files named
+
+test_*.py
+
+or
+
+*_test.py
+
+Inside those files it executes
+
+def test_login():
+
+Functions beginning with
+
+test_
+
+No manual registration is required.
+
+8. FIXTURES
+Definition
+
+Fixtures prepare resources before a test and clean them afterward.
+
+Instead of writing setup code repeatedly, write it once.
+
+Without fixture
+
+def test1():
+    db = Database()
+
+def test2():
+    db = Database()
+
+Repeated code.
+
+With fixture
+
+@pytest.fixture
+def db():
+    return Database()
+
+Now every test simply requests
+
+def test_user(db):
+
+Pytest injects it automatically.
+
+9. FIXTURE SCOPE
+
+Fixtures can exist for different lifetimes.
+
+Scopes determine how many times a fixture is created.
+
+function
+class
+module
+package
+session
+10. FUNCTION SCOPE
+
+Default scope.
+
+A new fixture is created for every test.
+
+Test1
+↓
+
+Database created
+
+↓
+
+Database destroyed
+
+Test2
+
+↓
+
+New database created
+
+↓
+
+Destroyed
+
+Advantages
+
+Complete isolation
+Safe testing
+
+Disadvantage
+
+Slower
+11. MODULE SCOPE
+
+One fixture for an entire Python file.
+
+Module
+
+↓
+
+Database created once
+
+↓
+
+Test1
+
+↓
+
+Test2
+
+↓
+
+Test3
+
+↓
+
+Destroyed
+
+Advantages
+
+Faster
+Shared setup
+12. SESSION SCOPE
+
+One fixture for the whole testing session.
+
+pytest starts
+
+↓
+
+Database created
+
+↓
+
+100 tests
+
+↓
+
+Database destroyed
+
+↓
+
+pytest ends
+
+Very useful for
+
+Database server
+API client
+Browser
+Docker container
+13. SETUP OPERATION
+
+Runs before the test.
+
+Example
+
+Connect database
+
+↓
+
+Insert sample data
+
+↓
+
+Run test
+14. TEARDOWN OPERATION
+
+Runs after the test.
+
+Example
+
+Delete sample data
+
+↓
+
+Close database
+
+↓
+
+Remove temporary files
+
+Prevents resource leaks.
+
+15. YIELD FIXTURE
+
+Pytest uses yield to separate setup and teardown.
+
+Example
+
+@pytest.fixture
+def db():
+    print("Connect")
+    yield
+    print("Disconnect")
+
+Execution
+
+Connect
+
+↓
+
+Run test
+
+↓
+
+Disconnect
+
+Everything before
+
+yield
+
+is setup.
+
+Everything after
+
+yield
+
+is teardown.
+
+16. @pytest.mark.parametrize
+
+Instead of writing many similar tests, parameterization runs one test multiple times.
+
+Without parameterization
+
+def test1():
+    assert add(1,2)==3
+
+def test2():
+    assert add(2,3)==5
+
+def test3():
+    assert add(4,5)==9
+
+With parameterization
+
+@pytest.mark.parametrize(
+    "a,b,result",
+    [
+        (1,2,3),
+        (2,3,5),
+        (4,5,9)
+    ]
+)
+
+Much shorter.
+
+Cleaner.
+
+Reusable.
+
+17. PARAMETER TABLES
+
+Parameter tables store multiple test cases.
+
+Example
+
+Username	Password	Expected
+admin	123	True
+admin	abc	False
+guest	123	False
+
+One test executes all rows automatically.
+
+This avoids duplicate code.
+
+18. EDGE CASE TESTING
+
+Edge cases test unusual values.
+
+Examples
+
+0
+
+-1
+
+999999999
+
+Empty string
+
+Very long string
+
+None
+
+Whitespace
+
+Example
+
+assert divide(10,0)
+
+Should raise an exception.
+
+Edge cases reveal hidden bugs.
+
+19. VALID PAYLOAD TESTING
+
+Payload means input data.
+
+Example
+
+{
+    "name":"Ali",
+    "age":20
+}
+
+A valid payload should pass validation.
+
+20. INVALID PAYLOAD TESTING
+
+Example
+
+{
+    "name":"",
+    "age":-5
+}
+
+Program should reject it.
+
+It should not crash.
+
+It should return a proper validation error.
+
+21. TEST ISOLATION
+
+Every test should be independent.
+
+Bad Example
+
+Test A changes database.
+
+↓
+
+Test B fails.
+
+Good Example
+
+Test A
+
+↓
+
+Cleanup
+
+↓
+
+Test B
+
+↓
+
+Fresh environment
+
+Tests should never depend on execution order.
+
+22. ASSERTIONS
+
+Assertions verify expected behavior.
+
+Example
+
+assert add(5,5)==10
+
+If true
+
+PASSED
+
+Otherwise
+
+FAILED
+
+Assertions are the core of every pytest test.
+
+23. TEST COLLECTION
+
+Before running tests, pytest first discovers them.
+
+Process
+
+pytest
+
+↓
+
+Collect files
+
+↓
+
+Collect test functions
+
+↓
+
+Prepare fixtures
+
+↓
+
+Run tests
+
+↓
+
+Show report
+
+Example output
+
+Collected 25 items
+24. REUSABLE TEST COMPONENTS
+
+Instead of repeating code, share it.
+
+Examples
+
+Fixtures
+Helper functions
+Base test classes
+Utility methods
+
+Benefits
+
+Less duplication
+Easier maintenance
+Cleaner code
+25. CLEAN TEST ARCHITECTURE
+
+A well-organized pytest project separates application code, tests, configurations, and shared resources.
+
+Example structure
+
+Project/
+│
+├── app/
+│   ├── models.py
+│   ├── services.py
+│   └── validators.py
+│
+├── tests/
+│   ├── test_models.py
+│   ├── test_services.py
+│   ├── test_validators.py
+│   ├── conftest.py
+│   └── data/
+│       ├── valid_payloads.json
+│       └── invalid_payloads.json
+│
+├── pytest.ini
+├── requirements.txt
+└── README.md
+Benefits
+Easy to understand and navigate.
+Shared fixtures live in conftest.py.
+Test data is stored separately from test logic.
+Scales well as the project grows.
+Supports deterministic, maintainable, and reusable automated tests.
+
+These concepts together form the foundation for writing reliable, deterministic, and scalable automated tests with pytest, especially for real-world Python applications.
