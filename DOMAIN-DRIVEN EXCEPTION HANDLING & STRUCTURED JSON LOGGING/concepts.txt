@@ -1,0 +1,168 @@
+MAIN MOTIVE
+
+Build reliable Python applications by creating meaningful custom exceptions, generating machine-readable JSON logs, and protecting sensitive information through automatic log redaction.
+
+THEORETICAL CONCEPTS (ONE LINE EACH)
+1. EXCEPTION HANDLING
+
+A mechanism used to detect and manage runtime errors without crashing the program.
+
+2. CUSTOM EXCEPTIONS
+
+User-defined exception classes that represent application-specific errors.
+
+3. DOMAIN-DRIVEN EXCEPTIONS
+
+Exceptions designed around business rules instead of generic Python errors.
+
+4. BASE EXCEPTION CLASS
+
+A parent exception that all project-specific exceptions inherit from.
+
+5. EXCEPTION HIERARCHY
+
+A tree of related exception classes organized by inheritance.
+
+6. raise
+
+Used to intentionally throw an exception.
+
+7. try
+
+Contains code that might produce an exception.
+
+8. except
+
+Handles exceptions raised inside the try block.
+
+9. finally
+
+Executes cleanup code whether an exception occurs or not.
+
+10. else
+
+Runs only if no exception occurs.
+
+11. LOGGING
+
+Recording application events, errors, and runtime information.
+
+12. STRUCTURED LOGGING
+
+Logging data in structured formats like JSON instead of plain text.
+
+13. JSON LOGS
+
+Machine-readable log entries represented as JSON objects.
+
+14. LOGURU
+
+A modern Python logging library that simplifies structured logging.
+
+15. STANDARD LOGGING MODULE
+
+Python's built-in framework for recording log messages.
+
+16. LOG LEVELS
+
+Different severities such as DEBUG, INFO, WARNING, ERROR, and CRITICAL.
+
+17. LOG SINK
+
+The destination where logs are stored (console, file, database, etc.).
+
+18. ELK STACK
+
+A centralized log analysis platform using Elasticsearch, Logstash, and Kibana.
+
+19. GRAFANA
+
+A visualization platform used to monitor logs and metrics.
+
+20. LOG AGGREGATION
+
+Collecting logs from multiple systems into one centralized location.
+
+21. LOG REDACTION
+
+Automatically hiding sensitive information before logs are stored.
+
+22. SENSITIVE DATA
+
+Information like passwords, API keys, SSNs, CNICs, or tokens that must not appear in logs.
+
+23. MASKING
+
+Replacing confidential values with symbols such as ******.
+
+24. FILTER
+
+A component that modifies or blocks log records before they are written.
+
+25. JSON SERIALIZATION
+
+Converting Python objects into JSON format.
+
+26. TRACEBACK
+
+Detailed information showing where an exception occurred.
+
+27. ERROR PROPAGATION
+
+Passing an exception upward until it is handled.
+
+28. DOMAIN MODEL
+
+The representation of real-world business entities and rules.
+
+29. INGESTION ENGINE
+
+A system responsible for receiving, validating, and processing incoming data.
+
+30. AUDIT LOGGING
+
+Logging important business events for future review.
+
+31. OBSERVABILITY
+
+The ability to understand application behavior through logs, metrics, and traces.
+
+32. CORRELATION ID
+
+A unique identifier used to track a request across multiple services.
+
+33. CONTEXTUAL LOGGING
+
+Including extra information such as user ID, request ID, or service name in logs.
+
+34. LOG FORMATTER
+
+A component that determines how log records are displayed or stored.
+
+35. FAIL-FAST PRINCIPLE
+
+Stopping execution immediately when invalid conditions are detected.
+
+36. ERROR WRAPPING
+
+Raising a higher-level exception while preserving the original cause.
+
+37. EXCEPTION CHAINING
+
+Using raise ... from ... to maintain the original traceback.
+
+38. DATA SANITIZATION
+
+Cleaning or modifying data before processing or logging.
+
+39. SECURITY LOGGING
+
+Recording security-related events without exposing confidential data.
+
+40. PRODUCTION LOGGING
+
+Logging designed for monitoring and debugging real production systems.
+
+MAIN MOTIVE
+
+Build reliable Python applications by creating meaningful custom exceptions, generating machine-readable JSON logs, and protecting sensitive information through automatic log redaction.
