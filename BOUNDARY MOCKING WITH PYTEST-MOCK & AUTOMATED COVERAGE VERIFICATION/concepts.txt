@@ -1,0 +1,30 @@
+Mocking – Replaces real objects with fake ones during testing.
+Boundary Mocking – Mocks external systems like databases, APIs, files, or webhooks.
+pytest-mock – A pytest plugin that provides the mocker fixture for creating mocks.
+unittest.mock – Python's built-in library for mocking objects and functions.
+Mock Object – A fake object that simulates the behavior of a real dependency.
+MagicMock – A mock object that automatically supports magic methods.
+patch() – Temporarily replaces an object during a test.
+patch.object() – Replaces a specific method or attribute of an object.
+Mock Return Value – Specifies what a mocked function should return.
+Mock Side Effect – Makes a mock raise exceptions or return different values.
+assert_called_once() – Verifies the mocked function was called exactly once.
+assert_called_with() – Ensures the mock received expected arguments.
+assert_not_called() – Checks that a mock was never executed.
+Deterministic Testing – Tests always produce the same result regardless of environment.
+Isolation Testing – Tests only the code under test without external dependencies.
+Network Boundary – Any external API, database, or remote service.
+Database Mocking – Simulates database connections without a real database.
+Webhook Mocking – Simulates third-party HTTP callbacks.
+pytest-cov – Pytest plugin that measures test coverage.
+Line Coverage – Percentage of executed code lines.
+Branch Coverage – Percentage of executed decision branches.
+Coverage Report – Shows which lines were or were not tested.
+GitHub Actions – CI/CD workflows executed automatically on GitHub.
+Pre-commit Hook – Runs checks before every Git commit.
+Coverage Threshold – Minimum required test coverage (e.g., 95%).
+mypy – Static type checker for Python.
+Type Safety – Detects incorrect type usage before runtime.
+Continuous Integration (CI) – Automatically validates code after every push.
+Quality Gate – Stops commits or builds if quality rules fail.
+Fast Test Suite – Tests that execute in seconds by avoiding real external resources.
