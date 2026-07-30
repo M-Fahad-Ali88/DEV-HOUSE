@@ -1,0 +1,242 @@
+TASK - 1:
+#Purpose
+
+#Compare the performance of:
+
+#Single-threaded execution
+#Multi-threading (threading)
+#Multi-processing (multiprocessing)
+
+#for both:
+
+#CPU-bound workload (heavy calculations)
+#I/O-bound workload (time.sleep())
+
+Task 2: Prove that Threading Doesn't Speed Up CPU-bound Tasks
+Purpose
+
+Demonstrate experimentally that CPython's GIL prevents threads from executing CPU-bound Python code in parallel.
+
+File Name
+
+Expected Result
+
+Usually you'll observe something like:
+
+Threading Time:        6.8 sec
+Multiprocessing Time:  3.5 sec
+
+Conclusion
+
+Threads do not significantly speed up CPU-bound tasks because only one thread executes Python bytecode at a time due to the GIL.
+Processes can run in parallel on multiple CPU cores, so CPU-bound tasks complete faster.
+
+
+Task 3: Shared Memory + Race Condition + Lock
+Purpose
+Share data using multiprocessing.Value
+Create a race condition
+Fix it using multiprocessing.Lock
+
+
+Expected Output
+
+Without a lock:
+
+Without Lock
+Counter: 163482
+
+(The value changes each run and is usually less than 200000 because updates are lost.)
+
+With a lock:
+
+With Lock
+Counter: 200000
+
+
+Safe Increment
+with lock:
+    counter.value += 1
+
+The with lock: block ensures:
+
+One process acquires the lock.
+It updates the counter safely.
+It releases the lock.
+The next process can then update the counter.
+
+
+
+Key Concepts Learned
+Threading shares memory within a process and is ideal for I/O-bound tasks.
+Multiprocessing creates independent processes with separate memory and GILs, making it suitable for CPU-bound tasks.
+The Global Interpreter Lock (GIL) allows only one thread to execute Python bytecode at a time in a CPython process.
+A race condition occurs when multiple threads or processes modify shared data concurrently without synchronization.
+Locks (mutexes) ensure that only one thread or process accesses a critical section at a time, preventing race conditions.
+(.venv) PS D:\DEV HOUSE\Pyhton> & "d:\DEV HOUSE\Pyhton\.venv\Scripts\python.exe" "d:/DEV HOUSE/Pyhton/CONCURRENCY IN PYTHON, GIL, THREADING, MULTIPROCESSING, AND RACE CONDITIONS/Task2_GIL_Demonstration.py"
+Threading Time: 3.0578886000002967
+Multiprocessing Time: 1.6868536999991193
+
+Your output is exactly what we would expect from this experiment.
+
+Threading Time:       3.06 seconds
+Multiprocessing Time: 1.69 seconds
+What does this prove?
+Threading: ~3.06 seconds
+Multiprocessing: ~1.69 seconds
+
+The multiprocessing version finished almost twice as fast as the threading version.
+
+Why?
+Threading
+Both threads execute the heavy_math() function.
+Since it is a CPU-bound task, the GIL (Global Interpreter Lock) allows only one thread at a time to execute Python bytecode.
+The threads rapidly switch execution, but they do not run in true parallel.
+Multiprocessing
+Two separate processes are created.
+Each process has:
+Its own Python interpreter.
+Its own GIL.
+Its own memory space.
+Therefore, both processes can run simultaneously on different CPU cores, reducing the total execution time.
+Conclusion
+
+Your experiment successfully demonstrates the purpose of the task:
+
+Threading does not significantly speed up CPU-bound tasks in CPython because of the Global Interpreter Lock (GIL), whereas multiprocessing achieves better performance by utilizing multiple CPU cores.
+
+Why isn't the threading time exactly double?
+
+You might expect it to be exactly 2× slower, but it isn't because of factors such as:
+
+CPU scheduling by the operating system.
+CPU cache effects.
+Turbo Boost / Precision Boost on modern processors.
+Context switching overhead.
+Other background processes running on your system.
+
+These factors make the exact timings vary from one run to another, but the important observation remains: multiprocessing is noticeably faster than threading for CPU-bound work, which is precisely what this task is designed to demonstrate.
+
+Yes, that's correct. 👍
+
+A slightly more precise way to say it is:
+
+Each process has its own main thread, and the main threads of different processes can execute at the same time because each process has its own GIL and can run on a different CPU core.
+
+For example:
+
+CPU Core 1                 CPU Core 2
+
+Process 1                  Process 2
+└── Main Thread            └── Main Thread
+     Running                    Running
+
+Both Main Thread 1 and Main Thread 2 are executing simultaneously.
+
+If Process 1 creates more threads:
+
+Process 1
+├── Main Thread
+├── Thread 2
+└── Thread 3
+
+Then inside Process 1, those threads share Process 1's GIL, so for CPU-bound Python code they take turns executing.
+
+Meanwhile, Process 2's main thread can continue running independently because it has its own GIL.
+
+One-line summary to remember
+Threads in the same process share one GIL.
+Different processes have different GILs, so their main threads (and any threads they create) can run independently of threads in other processes.
+
+This is exactly why your multiprocessing benchmark finished much faster than your threading benchmark.
+
+ok when we have threading than we will follow the one by one execution of thread inside a process of a program
+
+Yes, that's essentially correct, with one small clarification.
+
+You can say:
+
+When we use threading in CPython for CPU-bound tasks, the threads inside a process execute one at a time because they share the same GIL.
+
+Example
+Program
+│
+└── Process
+    ├── Thread 1
+    ├── Thread 2
+    └── Thread 3
+
+Execution looks like this:
+
+Time 1 → Thread 1 runs
+Time 2 → Thread 2 runs
+Time 3 → Thread 3 runs
+Time 4 → Thread 1 runs again
+...
+
+The threads do not execute Python bytecode simultaneously for CPU-bound work. Instead, the GIL switches between them very quickly, giving each thread a turn.
+
+Important Exception
+
+This "one-by-one" behavior mainly applies to CPU-bound Python code.
+
+For I/O-bound tasks (such as time.sleep(), file reading, network requests, or database queries), when one thread is waiting, it releases the GIL, allowing another thread to run. This is why threading is effective for I/O-bound workloads.
+
+Interview Answer
+
+In CPython, multiple threads within the same process share a single GIL. Therefore, for CPU-bound tasks, only one thread executes Python bytecode at a time, while the others wait for their turn. For I/O-bound tasks, threads can make good progress because a waiting thread releases the GIL, allowing another thread to run.
+
+ok the main factor is GIL if we have many GIL of ddifferent processes than thread will executes at same time due to their own GIL and in threading thread executes one by one so thats why multiprocessing is faster than threading although multiprocessing has also threads but have separate GIL, CPython interpreter
+
+Yes, you've understood the core idea. I would just refine it slightly to make it technically accurate.
+
+Your understanding (corrected)
+
+The main factor in CPython is the GIL. In threading, all threads inside the same process share one GIL, so for CPU-bound tasks only one thread can execute Python bytecode at a time. In multiprocessing, each process has its own CPython interpreter and its own GIL. Therefore, the main thread of each process can execute simultaneously on different CPU cores. That's why multiprocessing is faster than threading for CPU-bound tasks. Although each process can have threads, those threads share only that process's GIL, not the GIL of other processes.
+
+Visual Representation
+Threading
+
+One Process
+┌──────────────────────────────┐
+│ One CPython Interpreter      │
+│ One GIL                      │
+│                              │
+│ Thread 1  ←┐                 │
+│ Thread 2  ←┼── Take turns    │
+│ Thread 3  ←┘                 │
+└──────────────────────────────┘
+Multiprocessing
+
+Process 1              Process 2
+┌──────────────┐       ┌──────────────┐
+│ Interpreter  │       │ Interpreter  │
+│ GIL #1       │       │ GIL #2       │
+│ Main Thread  │       │ Main Thread  │
+└──────────────┘       └──────────────┘
+       │                      │
+       └──── Run Together ────┘
+One important correction
+
+You said:
+
+"thread will executes at same time due to their own GIL"
+
+A more accurate statement is:
+
+Processes execute at the same time because each process has its own interpreter and GIL. The threads inside each individual process still share that process's GIL.
+
+Interview-quality summary
+
+In CPython, threading is limited by the Global Interpreter Lock (GIL) because all threads within a process share the same GIL. For CPU-bound tasks, only one thread can execute Python bytecode at a time. Multiprocessing overcomes this limitation by creating separate processes, each with its own CPython interpreter and its own GIL, allowing true parallel execution on multiple CPU cores.
+
+Summary
+Task	Goal	Main Modules
+Task1_Benchmark.py	Compare single-threading, threading, and multiprocessing for CPU-bound and I/O-bound workloads	threading, multiprocessing, time
+Task2_GIL_Demonstration.py	Experimentally show that the GIL prevents threading from speeding up CPU-bound tasks	threading, multiprocessing
+Task3_RaceCondition.py	Demonstrate a race condition with shared memory and fix it using a lock	multiprocessing.Value, multiprocessing.Lock
+
+
+Summary: CONCURRENCY IN PYTHON: GIL, THREADING, MULTIPROCESSING, AND RACE CONDITIONS
+
+In this topic, we learned how concurrency works in CPython and the role of the Global Interpreter Lock (GIL). The GIL allows only one thread to execute Python bytecode at a time within a process, making Python's memory management safe and preventing multiple threads from modifying the same object simultaneously. We studied the difference between threading and multiprocessing. In threading, multiple threads share the same process, memory, interpreter, and GIL, so for CPU-bound tasks, the threads take turns executing and do not achieve true parallelism. In multiprocessing, each process has its own Python interpreter, memory space, and GIL, allowing multiple processes to run simultaneously on different CPU cores, which makes it much faster for CPU-intensive workloads. We also benchmarked single-threaded, multi-threaded, and multi-processed programs for both CPU-bound and I/O-bound tasks, experimentally proving that threading does not speed up CPU-bound tasks in CPython because of the GIL, while multiprocessing does. Finally, we learned about shared memory using multiprocessing.Value, observed how a race condition occurs when multiple processes update shared data without synchronization, and fixed it using multiprocessing.Lock, ensuring that only one process accesses the shared resource at a time and producing the correct result.

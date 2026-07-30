@@ -28,3 +28,5 @@ Type Safety – Detects incorrect type usage before runtime.
 Continuous Integration (CI) – Automatically validates code after every push.
 Quality Gate – Stops commits or builds if quality rules fail.
 Fast Test Suite – Tests that execute in seconds by avoiding real external resources.
+
+
