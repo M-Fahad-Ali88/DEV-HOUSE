@@ -1,0 +1,291 @@
+Easy version to memorize
+Coroutines → Do the asynchronous work.
+Tasks → Track and manage the execution state of coroutines.
+Futures → Hold the result of an asynchronous operation.
+Event Loop → Schedules tasks and decides when they pause and resume.
+
+Task 1: Deep Dive into async and await
+Concept
+
+This task helps you understand how asynchronous functions actually work internally.
+
+When you write:
+
+async def fetch():
+    await asyncio.sleep(2)
+
+Python does not execute the function immediately.
+
+Instead:
+
+async def creates a Coroutine Object.
+The Event Loop starts running the coroutine.
+When await is reached, the coroutine pauses.
+The Event Loop saves its current state (line number, local variables, stack).
+The Event Loop runs another coroutine instead.
+When the awaited operation finishes, the paused coroutine resumes exactly where it stopped.
+What you should learn
+What async def really creates.
+What await does internally.
+How coroutines suspend and resume.
+Why await doesn't block the thread.
+How the Event Loop switches between coroutines.
+Difference between synchronous and asynchronous execution.
+Key Concepts
+Coroutine
+async
+await
+Suspension
+Resuming
+Event Loop
+Non-blocking execution
+
+Execution Flow
+main()
+
+↓
+
+fetch_data() creates a Coroutine Object
+
+↓
+
+await coroutine
+
+↓
+
+Coroutine starts
+
+↓
+
+await asyncio.sleep(3)
+
+↓
+
+Coroutine pauses
+
+↓
+
+Event Loop waits (or runs other coroutines)
+
+↓
+
+3 seconds complete
+
+↓
+
+Coroutine resumes
+
+↓
+
+Coroutine finishes
+
+↓
+
+main() continues
+
+↓
+
+Program ends
+Key Takeaway
+async def creates a coroutine object.
+await starts the coroutine (if it hasn't started) and pauses it whenever it encounters another await.
+await asyncio.sleep() is non-blocking—it pauses only the current coroutine, not the entire thread.
+The Event Loop is responsible for suspending and later resuming the coroutine.
+
+
+
+Task 2: Cooperative Multi-Tasking using asyncio.create_task() and asyncio.gather()
+Concept
+
+Normally,
+
+await task1()
+await task2()
+
+runs one after another.
+
+Using
+
+asyncio.create_task()
+
+the Event Loop schedules both coroutines.
+
+Instead of waiting for one to finish, they execute cooperatively.
+
+Example flow
+
+Task A starts
+↓
+
+await
+
+↓
+
+Task B starts
+
+↓
+
+await
+
+↓
+
+Task C starts
+
+↓
+
+Task A resumes
+
+↓
+
+Task B resumes
+
+↓
+
+Task C finishes
+
+asyncio.gather() waits until all tasks complete while allowing them to make progress concurrently.
+
+What you should learn
+Creating background tasks.
+Scheduling multiple coroutines.
+Running tasks concurrently.
+Waiting for multiple tasks together.
+Understanding cooperative multitasking.
+Difference between sequential execution and concurrent execution.
+Also learn Task Cancellation
+
+Sometimes tasks must stop before finishing.
+
+task.cancel()
+
+raises
+
+asyncio.CancelledError
+
+inside the coroutine.
+
+This lets the coroutine:
+
+clean resources
+close files
+close network connections
+exit safely
+Key Concepts
+Task
+create_task()
+gather()
+Cooperative Multitasking
+Concurrent execution
+Task Lifecycle
+Task Cancellation
+CancelledError
+
+Key Takeaway
+
+Your output is a perfect demonstration of cooperative multitasking:
+
+asyncio.create_task() schedules all three coroutines.
+await asyncio.sleep() lets each coroutine pause without blocking the thread.
+The Event Loop resumes whichever task becomes ready next.
+asyncio.gather() waits until every scheduled task has completed before allowing main() to continue.
+
+
+Task 3: Inject a Blocking Call and Observe Event Loop Freeze
+Concept
+
+This task demonstrates why blocking functions should never be used inside asynchronous code.
+
+Wrong example
+
+time.sleep(5)
+
+or
+
+requests.get(url)
+
+These functions block the entire OS thread.
+
+Since the Event Loop also runs on that thread, every coroutine stops.
+
+Flow
+
+Coroutine A
+
+↓
+
+time.sleep()
+
+↓
+
+Entire Event Loop Stops
+
+↓
+
+Coroutine B cannot run
+
+↓
+
+Coroutine C cannot run
+
+Correct version
+
+await asyncio.sleep(5)
+
+Now
+
+Coroutine A waits
+
+↓
+
+Event Loop switches
+
+↓
+
+Coroutine B runs
+
+↓
+
+Coroutine C runs
+
+↓
+
+Coroutine A resumes later
+
+The Event Loop never freezes.
+
+What you should learn
+Difference between blocking and non-blocking code.
+Why time.sleep() freezes everything.
+Why requests.get() blocks async applications.
+Why asyncio.sleep() is different.
+Why async HTTP libraries (aiohttp, httpx.AsyncClient) are used instead of requests.
+How blocking code destroys concurrency.
+Key Concepts
+Blocking I/O
+Non-blocking I/O
+Event Loop Freeze
+time.sleep()
+asyncio.sleep()
+requests.get()
+Async HTTP Clients
+Responsiveness
+Overall Concepts Covered in These Tasks
+Task	Main Concept	What You'll Understand
+Task 1	Coroutines, async, await	How coroutines pause and resume without blocking the thread.
+Task 2	Tasks, create_task(), gather(), Cancellation	How the Event Loop schedules, runs, manages, and cancels multiple coroutines concurrently.
+Task 3	Blocking vs Non-Blocking	Why synchronous functions freeze the Event Loop and how asynchronous alternatives keep applications responsive.
+One-Line Purpose (Roman Urdu)
+
+Is topic ka maqsad yeh samajhna hai ke Python ka Event Loop coroutines ko await ke zariye pause aur resume karke bina thread ko block kiye multiple I/O tasks ko efficiently handle karta hai, aur blocking functions (time.sleep(), requests.get()) async application ki performance ko kaise kharab kar dete hain.
+
+Easy version (Roman Urdu)
+
+time.sleep() poora Event Loop block kar deta hai. Is wajah se jab task1 chal raha hota hai, Event Loop task2 par switch hi nahi kar sakta. Is liye pehle task1 poora complete hota hai, uske baad hi task2 execute hota hai. Agar await asyncio.sleep() use karein, to task1 pause ho jata hai aur Event Loop foran task2 ko chala deta hai.
+
+One-line rule to memorize
+
+await gives control back to the Event Loop, while time.sleep() takes control away from the Event Loop.
+
+Short Summary
+
+Python's asyncio enables asynchronous programming by using coroutines, tasks, futures, and a non-blocking event loop to efficiently handle multiple I/O-bound operations within a single thread. Coroutines created with async def pause at await, allowing the Event Loop to run other ready tasks without blocking. asyncio.create_task() schedules coroutines for concurrent execution, while asyncio.gather() waits until all tasks complete before continuing. Futures represent results that will become available later and are used internally by tasks. A key concept is avoiding blocking calls like time.sleep() or requests.get() inside async code, as they freeze the Event Loop, whereas non-blocking operations such as await asyncio.sleep() keep the application responsive by allowing other tasks to execute concurrently.
