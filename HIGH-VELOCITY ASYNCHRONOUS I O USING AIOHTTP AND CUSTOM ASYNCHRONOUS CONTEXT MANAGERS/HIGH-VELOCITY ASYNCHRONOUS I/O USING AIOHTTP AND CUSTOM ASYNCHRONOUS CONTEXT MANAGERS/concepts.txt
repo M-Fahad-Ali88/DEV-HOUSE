@@ -1,0 +1,60 @@
+Daily Tasks
+1. Build asynchronous TCP socket connections and HTTP engine interfaces using aiohttp
+
+Definition: Build non-blocking TCP and HTTP connections that can send and receive data concurrently using the aiohttp library.
+
+Purpose: To perform fast and efficient network communication without blocking the application.
+
+2. Implement custom asynchronous context managers (__aenter__, __aexit__) for safe network resource management
+
+Definition: Create custom async context managers that automatically acquire and release network resources using the async with statement.
+
+Purpose: To ensure network sessions and connections are properly opened and closed, preventing resource leaks.
+
+3. Design deterministic timeout and retry mechanisms to gracefully handle remote server drop-offs
+
+Definition: Implement fixed timeout limits and automatic retry logic to handle failed or delayed network requests.
+
+Purpose: To make applications reliable by recovering from temporary server failures and preventing indefinite waiting.
+
+Task 1: Build Asynchronous HTTP Engine using aiohttp
+Real-World Uses
+🌐 Web scraping multiple websites simultaneously.
+📈 Fetching live stock market prices.
+🌦️ Retrieving weather data from APIs.
+💬 Chat applications communicating with servers.
+🛒 E-commerce websites requesting product information from multiple services.
+🤖 AI applications calling APIs like OpenAI or Gemini concurrently.
+
+Example:
+A food delivery app requests restaurant details, delivery time, and driver location at the same time instead of waiting for each request one by one.
+
+Task 2: Custom Asynchronous Context Managers (__aenter__, __aexit__)
+Real-World Uses
+🔌 Automatically opening and closing database connections.
+🌐 Managing HTTP client sessions.
+📁 Opening and closing asynchronous files.
+☁️ Connecting to cloud storage services.
+🔒 Managing WebSocket connections for live chat or notifications.
+📡 Handling network sockets safely.
+
+Example:
+A banking application opens a secure database connection, performs a transaction, and automatically closes the connection afterward—even if an error occurs.
+
+Task 3: Timeout and Retry Mechanism
+Real-World Uses
+💳 Online payment systems retry failed payment requests.
+🌦️ Weather apps retry when the weather server is temporarily unavailable.
+🚗 Ride-sharing apps retry GPS or map requests.
+📧 Email services retry sending emails if the mail server is busy.
+☁️ Cloud applications retry uploads when the internet connection drops.
+🤖 AI chatbots retry API requests if the AI server is temporarily overloaded.
+
+Example:
+When you click "Pay Now" on an online shopping website, the payment gateway may not respond immediately. Instead of showing an error right away, the application waits for a few seconds and retries the request before informing the user that the payment failed.
+
+Summary
+Task	Real-World Purpose
+Task1_AsyncHTTP.py	Perform multiple HTTP/API requests concurrently for faster applications.
+Task2_AsyncContextManager.py	Automatically manage resources (connections, sessions, files) safely and prevent resource leaks.
+Task3_TimeoutRetry.py	Make applications reliable by handling slow servers, network failures, and temporary connection issues gracefully.
