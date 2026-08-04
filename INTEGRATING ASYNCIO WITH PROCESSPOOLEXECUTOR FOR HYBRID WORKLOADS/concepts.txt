@@ -1,0 +1,782 @@
+Core Concept (Roman Urdu)
+
+Is topic ka main idea yeh hai ke asyncio sirf I/O tasks (network, files, APIs) ko efficiently handle karta hai, lekin agar uske andar CPU-intensive kaam (jaise parsing, encryption, image processing, ya heavy calculations) karwa do, to event loop block ho jata hai aur baaki async tasks ruk jati hain.
+
+Is problem ka solution ProcessPoolExecutor hai.
+
+ProcessPoolExecutor heavy CPU work ko alag worker processes mein bhej deta hai. Har process ka apna Python interpreter aur apna GIL hota hai, isliye CPU-bound tasks parallel execute ho sakte hain.
+
+Dono ko connect karne ke liye loop.run_in_executor() use hota hai.
+
+Simple Flow
+AsyncIO
+   │
+Receives Network Data
+   │
+Heavy CPU Task?
+   │
+   ├── No → Continue in Event Loop
+   │
+   └── Yes
+         │
+loop.run_in_executor()
+         │
+ProcessPoolExecutor
+         │
+Worker Processes
+         │
+Heavy Parsing
+         │
+Result Returned
+Easy Version to Memorize
+asyncio → I/O tasks ko manage karta hai.
+ProcessPoolExecutor → CPU-heavy tasks ko alag processes mein chalata hai.
+loop.run_in_executor() → AsyncIO aur ProcessPoolExecutor ko connect karta hai.
+Result → Event loop responsive rehta hai aur CPU work parallel processes mein hota hai.
+
+Task 1
+
+Use loop.run_in_executor() to delegate heavy CPU parsing of raw network streams off the main event loop into a worker process pool.
+
+Roman Urdu:
+
+Jab network se raw data (telemetry strings) receive ho, to us data ko main event loop ke andar process mat karo agar parsing CPU-heavy hai. Is ke bajaye loop.run_in_executor() use karo jo is heavy parsing ko ProcessPoolExecutor ke worker processes mein bhej de. Is tarah event loop block nahi hota.
+
+Task 2
+
+Ensure main thread responsiveness while sub-processes crunch incoming string telemetry data.
+
+Roman Urdu:
+
+Jab worker processes incoming telemetry strings ko heavy parsing kar rahe hon, tab main thread (event loop) free rahe aur dusre asynchronous tasks, jaise naya network data receive karna ya doosri requests handle karna, bina rukay continue kare.
+
+Overall Idea (Easy to Memorize)
+Network se data aata hai.
+Agar parsing heavy ho to run_in_executor() use karo.
+ProcessPoolExecutor worker processes mein parsing karta hai.
+Main event loop free rehta hai aur naye I/O tasks handle karta rehta hai.
+Parsing complete hone ke baad result wapas event loop ko mil jata hai.
+One-Line Memory Trick
+
+Heavy CPU work → ProcessPoolExecutor | I/O handling → asyncio Event Loop | Connection → loop.run_in_executor()
+
+
+Flow (Roman Urdu)
+Network se data aata hai.
+asyncio ka Event Loop us data ko receive karta hai (kyun ke network I/O usi ka kaam hai).
+Event loop check karta hai:
+Agar kaam halka hai → khud handle kar leta hai.
+Agar CPU-intensive parsing hai → khud nahi karta.
+Event loop loop.run_in_executor() call karta hai.
+ProcessPoolExecutor us parsing task ko kisi worker process ko de deta hai.
+Har worker process ka apna Python interpreter aur apna GIL hota hai, isliye CPU-heavy parsing parallel ho sakti hai.
+Jab parsing complete ho jati hai, result wapas event loop ko milta hai.
+Event loop us result ko use karke aage ka asynchronous workflow continue karta hai.
+Short Memory Version
+Network Data
+      │
+      ▼
+AsyncIO Event Loop
+      │
+      ├── I/O Tasks → Continue
+      │
+      └── CPU Heavy Parsing
+             │
+             ▼
+    loop.run_in_executor()
+             │
+             ▼
+    ProcessPoolExecutor
+             │
+             ▼
+      Worker Processes
+ (Own Python Interpreter + Own GIL)
+             │
+             ▼
+      Parsed Result
+             │
+             ▼
+      Back to Event Loop
+Ek important baat
+
+Tumne kaha:
+
+"network se data to event loop hi accept krta hai phir bad main wo ProcessPoolExecutor k processes main jata hai..."
+
+100% sahi. Sirf ek wording improve karni hai:
+
+Data khud automatically process mein nahi chala jata.
+Event loop run_in_executor() ke through parsing function ko aur us data ko ProcessPoolExecutor ke worker process mein bhejta hai.
+
+Yani event loop dispatcher ka kaam karta hai:
+
+I/O khud handle karta hai.
+CPU-heavy kaam worker processes ko delegate karta hai.
+Jab result aa jaye to usay receive karke aage processing continue karta hai.
+
+Yehi is topic ka core concept hai.
+
+Excellent question. 👍 Yehi asyncio + ProcessPoolExecutor ka core behavior hai.
+
+Roman Urdu Explanation
+
+Maan lo:
+
+Heavy Task A aa gaya.
+Event loop ne run_in_executor() call kiya aur usay ProcessPoolExecutor ko de diya.
+Worker Process 1 us task ko process kar raha hai.
+
+Isi dauran network se Heavy Task B bhi aa jata hai.
+
+Ab kya hoga?
+
+➡️ Event loop bilkul free hai, kyun ke woh khud parsing nahi kar raha. Is liye woh:
+
+Network se Task B receive karega.
+Dobara run_in_executor() call karega.
+ProcessPoolExecutor Task B ko kisi available worker process ko de dega.
+
+Example:
+
+Event Loop
+     │
+     ├── Task A ─────────► Process 1 (Parsing...)
+     │
+     ├── Task B ─────────► Process 2 (Parsing...)
+     │
+     ├── Task C ─────────► Process 3 (Parsing...)
+     │
+     └── Continues receiving network data...
+Agar saare worker processes busy hon?
+
+Maan lo ProcessPoolExecutor ke paas sirf 4 worker processes hain.
+
+Process 1 → Busy
+Process 2 → Busy
+Process 3 → Busy
+Process 4 → Busy
+
+Ab Task 5 aa gaya.
+
+To kya hoga?
+
+➡️ Event loop block nahi hota.
+
+ProcessPoolExecutor ke andar ek queue hoti hai.
+
+Worker 1 → Busy
+Worker 2 → Busy
+Worker 3 → Busy
+Worker 4 → Busy
+
+Queue:
+Task 5
+Task 6
+Task 7
+
+Jab koi worker free hota hai, woh queue se next task utha leta hai.
+
+Result wapas kaise aata hai?
+
+Jab Process 1 Task A complete karta hai:
+
+Process 1
+     │
+     ▼
+Result Ready
+     │
+     ▼
+Future Complete
+     │
+     ▼
+Event Loop ko notify
+     │
+     ▼
+Coroutine resume hoti hai
+
+Yani event loop continuously:
+
+✅ Naya network data receive karta rehta hai.
+✅ Heavy tasks ko ProcessPoolExecutor ko bhejta rehta hai.
+✅ Completed results receive karta rehta hai.
+✅ Kisi ek heavy task ke complete hone ka wait karke block nahi hota.
+Yaad rakhne wali line
+
+Event loop kabhi CPU-heavy work nahi karta. Uska kaam sirf receive karna, delegate karna, aur result receive karke coroutine ko resume karna hota hai. ProcessPoolExecutor CPU-heavy work karta hai.
+
+mera ye swaal tha k aik process aik result de rha ho event loop ko 7 bje or 7 bje hi event loop dusra heavy task input le rha ho tu is surat main kya hoga
+
+Bohat achha sawal hai. Ye event loop ki working ko samajhne ka important point hai.
+
+Short answer: Koi problem nahi hogi. Dono events ko event loop bahut tez tareeqe se handle kar lega.
+
+Roman Urdu
+
+Maan lo 7:00:00 par do cheezen ek hi waqt par hoti hain:
+
+Process 1 parsing complete karke result bhejta hai.
+Network se ek naya heavy task bhi aa jata hai.
+
+Tum soch rahe ho ke event loop pehle kis ko handle karega?
+
+Jawab: Event loop ek hi thread mein chalta hai, isliye technically ek hi instant mein do kaam nahi karta. Lekin ye events ko queue mein receive karta hai aur microseconds mein ek ke baad ek process kar deta hai.
+
+Example:
+
+7:00:00.000000
+Process 1 -> Result Ready
+
+7:00:00.000001
+Network -> New Heavy Task
+
+Event Loop:
+
+1. Process 1 ka result receive kiya.
+2. Us coroutine ko resume kiya.
+3. Network ka naya task receive kiya.
+4. run_in_executor() se usay ProcessPoolExecutor ko bhej diya.
+5. Phir agle events handle karta raha.
+
+Ya agar OS ne network event pehle deliver kiya ho:
+
+1. Network task receive.
+2. run_in_executor() call.
+3. Process result receive.
+4. Coroutine resume.
+
+Dono cases sahi hain. Order operating system aur event loop ke scheduler par depend karta hai.
+
+Important Point
+
+Event loop kabhi confuse nahi hota aur na hi do events kho deta hai.
+
+Wo sirf:
+
+Event 1 handle karta hai.
+Phir foran Event 2 handle karta hai.
+
+Ye itni fast speed se hota hai ke practically dono almost simultaneous lagte hain.
+
+Ek Example
+
+Socho tum receptionist ho:
+
+Ek employee report dene aata hai.
+Usi waqt ek naya customer bhi aa jata hai.
+
+Tum dono se ek hi second mein baat nahi kar sakte, lekin tum:
+
+Report le lete ho (1–2 second ya kam).
+Phir foran naye customer ko attend kar lete ho.
+
+Event loop bhi bilkul isi tarah kaam karta hai, bas insaan se hazaron ya lakhon guna zyada tez.
+
+ok 
+
+Great! 👍 Lagta hai concept clear ho gaya.
+
+Bas is topic ki 3 golden lines yaad rakhna:
+
+Event Loop → I/O events receive karta hai aur coroutines ko manage karta hai.
+run_in_executor() → CPU-heavy task ko ProcessPoolExecutor ko delegate karta hai.
+ProcessPoolExecutor → Worker processes (har ek ka apna Python interpreter aur GIL hota hai) mein heavy computation karta hai aur result wapas event loop ko de deta hai.
+Interview/Exam Answer (Roman Urdu)
+
+"Event loop kabhi CPU-heavy task khud execute nahi karta. Wo sirf network se data receive karta hai, run_in_executor() ke through heavy task ProcessPoolExecutor ko bhejta hai, aur jab worker process result complete kar deta hai to event loop us result ko receive karke coroutine ko resume kar deta hai. Agar isi dauran naya task aa jaye, event loop usay bhi receive karke executor ko bhej deta hai. Is tarah event loop responsive rehta hai."
+
+Agar tum ye flow samajh gaye ho, to asyncio + ProcessPoolExecutor ka core concept tumhare liye clear hai.
+
+
+Understanding (Roman Urdu)
+1.
+import asyncio
+from concurrent.futures import ProcessPoolExecutor
+Samajh
+
+Hum do modules import kar rahe hain.
+
+asyncio
+Event Loop chalata hai.
+Network data receive karta hai.
+Coroutines manage karta hai.
+ProcessPoolExecutor
+CPU-heavy tasks ko alag processes mein chalata hai.
+2.
+def parse_telemetry_data(data):
+
+Ye ek normal function hai.
+
+Ye coroutine nahi hai.
+
+Kyun?
+
+Kyunkay ye CPU-heavy task perform karega.
+
+3.
+print(f"[PROCESS] Started parsing: {data}")
+
+Output:
+
+[PROCESS] Started parsing: TEMP=30,HUM=60
+
+Ye batata hai worker process ne parsing shuru kar di.
+
+4.
+total = 0
+
+for i in range(30_000_000):
+    total += i
+
+Ye sirf heavy CPU work simulate kar raha hai.
+
+Asal project mein yahan ho sakta hai:
+
+JSON Parsing
+XML Parsing
+Image Processing
+Encryption
+Compression
+
+Hum sirf CPU ko busy rakh rahe hain.
+
+5.
+return f"Parsed -> {data}"
+
+Parsing complete hone ke baad result return hota hai.
+
+Example
+
+Parsed -> TEMP=30,HUM=60
+receive_network_data()
+
+Ye coroutine hai.
+
+6.
+telemetry_packets = [
+    ...
+]
+
+Ye network se receive hone wale packets hain.
+
+Assume karo
+
+Packet 1
+
+TEMP=30,HUM=60
+
+phir
+
+Packet 2
+
+TEMP=31,HUM=62
+
+Aur isi tarah.
+
+7.
+tasks = []
+
+Ye list Futures store karegi.
+
+Har run_in_executor() ek Future return karta hai.
+
+8.
+for packet in telemetry_packets:
+
+Event Loop packets ko ek ek karke receive karta hai.
+
+Output
+
+TEMP=30
+
+TEMP=31
+
+TEMP=32
+
+TEMP=33
+9.
+future = loop.run_in_executor(
+    executor,
+    parse_telemetry_data,
+    packet
+)
+
+⭐ Ye poore program ki sabse important line hai.
+
+Yahan Event Loop kehta hai:
+
+"Main ye heavy task khud nahi karunga."
+
+Phir
+
+ProcessPoolExecutor
+
+ko call karta hai.
+
+Aur kehta hai
+
+Ye packet parse karo.
+
+Event Loop free ho jata hai.
+
+10.
+tasks.append(future)
+
+Future ko save kar liya.
+
+Taake baad mein result le saken.
+
+11.
+await asyncio.sleep(1)
+
+Ye sirf demo ke liye hai.
+
+Is se dikhaya gaya hai ke
+
+Event Loop
+
+rukta nahi
+
+Balkay
+
+1 second baad
+
+next packet receive kar leta hai.
+
+12.
+results = await asyncio.gather(*tasks)
+
+Ab Event Loop kehta hai
+
+"Jitne bhi Futures hain un sab ke results ka wait karo."
+
+Jab sab complete ho jate hain
+
+tab
+
+results
+
+mein aa jate hain.
+
+13.
+for result in results:
+    print(result)
+
+Output
+
+Parsed -> TEMP=30,HUM=60
+Parsed -> TEMP=31,HUM=62
+Parsed -> TEMP=32,HUM=64
+Parsed -> TEMP=33,HUM=65
+main()
+loop = asyncio.get_running_loop()
+
+Current Event Loop le liya.
+
+with ProcessPoolExecutor() as executor:
+
+Worker Processes create ho gaye.
+
+Example
+
+Process 1
+
+Process 2
+
+Process 3
+
+Process 4
+await receive_network_data(...)
+
+Ab Event Loop packets receive karna shuru kar deta hai.
+
+Complete Flow
+Network
+   │
+   ▼
+Event Loop
+   │
+Receive Packet
+   │
+Heavy Parsing?
+   │
+   ▼
+run_in_executor()
+   │
+   ▼
+ProcessPoolExecutor
+   │
+   ├── Process 1
+   ├── Process 2
+   ├── Process 3
+   └── Process 4
+        │
+        ▼
+Heavy Parsing
+        │
+        ▼
+Return Result
+        │
+        ▼
+Event Loop
+        │
+        ▼
+Print Result
+Core Concept (Exam Point)
+
+Is code ka sabse important concept ye hai:
+
+Event Loop sirf network data receive karta hai.
+CPU-heavy parsing khud nahi karta.
+run_in_executor() ke through parsing ko ProcessPoolExecutor ke worker processes mein bhej deta hai.
+Worker processes parallel parsing karte hain.
+Event Loop is dauran responsive rehta hai aur naye packets bhi receive karta rehta hai.
+Jab parsing complete hoti hai, result Future ke through Event Loop ko wapas mil jata hai aur asyncio.gather() un sab results ko collect kar leta hai.
+
+(.venv) PS D:\DEV HOUSE\Pyhton> & "d:\DEV HOUSE\Pyhton\.venv\Scripts\python.exe" "d:/DEV HOUSE/Pyhton/INTEGRATING ASYNCIO WITH PROCESSPOOLEXECUTOR FOR HYBRID WORKLOADS/Task1_2_ProcessPoolExecutor_HybridWorkload.py"
+[EVENT LOOP] Received: TEMP=30,HUM=60
+[PROCESS] Started parsing: TEMP=30,HUM=60
+[EVENT LOOP] Received: TEMP=31,HUM=62
+[PROCESS] Started parsing: TEMP=31,HUM=62
+[EVENT LOOP] Received: TEMP=32,HUM=64
+[PROCESS] Finished parsing: TEMP=30,HUM=60
+[PROCESS] Started parsing: TEMP=32,HUM=64
+[EVENT LOOP] Received: TEMP=33,HUM=65
+[PROCESS] Started parsing: TEMP=33,HUM=65
+[PROCESS] Finished parsing: TEMP=31,HUM=62
+[PROCESS] Finished parsing: TEMP=32,HUM=64
+[PROCESS] Finished parsing: TEMP=33,HUM=65
+
+----- Parsed Results -----
+Parsed -> TEMP=30,HUM=60
+Parsed -> TEMP=31,HUM=62
+Parsed -> TEMP=32,HUM=64
+Parsed -> TEMP=33,HUM=65
+(.venv) PS D:\DEV HOUSE\Pyhton> 
+
+Excellent! 🎉 This output is exactly what we expected. Let's understand it step by step.
+
+Step 1
+[EVENT LOOP] Received: TEMP=30,HUM=60
+Kya hua?
+
+Network se pehla packet aya.
+
+Network
+   │
+   ▼
+TEMP=30,HUM=60
+
+Event Loop ne usay receive kar liya.
+
+Abhi tak koi parsing nahi hui.
+
+Step 2
+[PROCESS] Started parsing: TEMP=30,HUM=60
+
+Ab Event Loop ne
+
+loop.run_in_executor(...)
+
+call kiya.
+
+Is ne packet ko ProcessPoolExecutor ko de diya.
+
+Ab worker process parsing shuru karta hai.
+
+Event Loop
+      │
+      ▼
+run_in_executor()
+      │
+      ▼
+Process 1
+Step 3
+[EVENT LOOP] Received: TEMP=31,HUM=62
+
+Ye sabse important line hai.
+
+Iska matlab
+
+Process 1 abhi bhi busy hai.
+
+Lekin Event Loop uska wait nahi kar raha.
+
+Wo doosra packet receive kar raha hai.
+
+Yani
+
+Event Loop
+
+free hai.
+
+Isi ko kehte hain
+
+Main Thread Responsiveness
+
+Jo tumhare Task 2 ka objective tha.
+
+Step 4
+[PROCESS] Started parsing: TEMP=31,HUM=62
+
+Ab ProcessPoolExecutor ne
+
+dusra worker process use kar liya.
+
+Process 1
+
+TEMP=30
+
+Aur
+
+Process 2
+
+TEMP=31
+
+Dono parallel chal rahe hain.
+
+Step 5
+[EVENT LOOP] Received: TEMP=32,HUM=64
+
+Event Loop teesra packet bhi receive kar leta hai.
+
+Notice
+
+Us ne pehle packet ke finish hone ka wait nahi kiya.
+
+Step 6
+[PROCESS] Finished parsing: TEMP=30,HUM=60
+
+Ab
+
+Process 1
+
+ka kaam complete ho gaya.
+
+Result Event Loop ko mil gaya.
+
+Lekin Event Loop abhi bhi busy nahi hua.
+
+Step 7
+[PROCESS] Started parsing: TEMP=32,HUM=64
+
+Ab ProcessPoolExecutor ne
+
+free hone wale process ko
+
+teesra task de diya.
+
+Step 8
+[EVENT LOOP] Received: TEMP=33,HUM=65
+
+Phir Event Loop
+
+chautha packet receive kar leta hai.
+
+Again
+
+ye prove karta hai
+
+Event Loop block nahi hua.
+
+Step 9
+[PROCESS] Started parsing: TEMP=33,HUM=65
+
+Ek aur worker process
+
+parsing start karta hai.
+
+Step 10
+[PROCESS] Finished parsing: TEMP=31
+[PROCESS] Finished parsing: TEMP=32
+[PROCESS] Finished parsing: TEMP=33
+
+Saare worker processes
+
+apna kaam complete kar dete hain.
+
+Step 11
+----- Parsed Results -----
+Parsed -> TEMP=30
+Parsed -> TEMP=31
+Parsed -> TEMP=32
+Parsed -> TEMP=33
+
+Ye line tab print hui jab
+
+results = await asyncio.gather(*tasks)
+
+execute hui.
+
+Matlab
+
+saare Futures complete ho gaye.
+
+Timeline
+Time
+
+0 sec
+│
+├── Event Loop receives Packet 1
+│
+├── Process 1 starts parsing
+│
+1 sec
+│
+├── Event Loop receives Packet 2
+│
+├── Process 2 starts parsing
+│
+2 sec
+│
+├── Event Loop receives Packet 3
+│
+├── Process 1 finishes
+│
+├── Process 1 starts Packet 3
+│
+3 sec
+│
+├── Event Loop receives Packet 4
+│
+├── Process 3 starts Packet 4
+│
+4 sec
+│
+├── Remaining processes finish
+│
+└── asyncio.gather() prints results
+Sabse Important Observation
+
+Tumhare output mein ye do lines dekho:
+
+[EVENT LOOP] Received: TEMP=31,HUM=62
+
+aur uske baad
+
+[PROCESS] Started parsing: TEMP=31,HUM=62
+
+Ye prove karta hai:
+
+Event Loop ne packet receive kiya.
+Usne turant run_in_executor() se worker process ko de diya.
+Event Loop phir agla packet receive karne ke liye free ho gaya.
+Ye code kis Daily Task ko prove karta hai?
+✅ Task 1
+
+Use loop.run_in_executor() to delegate heavy CPU parsing...
+
+✔️ Proved.
+
+Heavy parsing worker processes mein ho rahi hai.
+
+✅ Task 2
+
+Ensure main thread responsiveness...
+
+✔️ Proved.
+
+Output dikhata hai ke Event Loop naye packets receive karta raha, jabke worker processes pehle packets ki parsing kar rahe the.
+
+Interview/Exam One-Liner
+
+The asyncio event loop receives incoming network data and immediately delegates CPU-intensive parsing to a ProcessPoolExecutor using loop.run_in_executor(). While worker processes perform the parsing in parallel, the event loop remains responsive and continues handling new incoming data. This is called a hybrid workload because it combines asynchronous I/O with multiprocessing.
