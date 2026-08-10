@@ -1,0 +1,54 @@
+FLASK
+Client → Waitress (WSGI) → Flask → Route → Response
+
+DJANGO WSGI
+Client → Waitress (WSGI) → Django WSGI → View → Response
+
+DJANGO ASGI
+Client → Uvicorn (ASGI) → Django ASGI → View → Response
+
+Important concept
+
+This is not Flask becoming natively asynchronous. We're putting an ASGI adapter in front of Flask's WSGI application:
+
+Browser
+   ↓
+Uvicorn (ASGI)
+   ↓
+a2wsgi adapter
+   ↓
+Flask (WSGI)
+   ↓
+Route
+   ↓
+Response
+
+FLASK + WSGI
+Client → Waitress (WSGI) → Flask → Route → Response
+
+DJANGO + WSGI
+Client → Waitress (WSGI) → Django WSGI → View → Response
+
+DJANGO + ASGI
+Client → Uvicorn (ASGI) → Django ASGI → View → Response
+
+FLASK + ASGI
+Client → Uvicorn (ASGI) → a2wsgi → Flask (WSGI) → Route → Response
+
+FLASK ROUTING
+Request → Flask Router → Route Function → Response
+
+DJANGO ROUTING
+Request → Django URL Resolver → View → Response
+
+FLASK DESIGN
+Lightweight → Modular → Flexible
+
+DJANGO DESIGN
+Structured → MVT → Models + Views + Templates
+
+WSGI
+Synchronous → Traditional Request Handling
+
+ASGI
+Async-Capable → Modern Request Handling
