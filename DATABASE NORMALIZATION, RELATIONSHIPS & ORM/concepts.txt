@@ -1,0 +1,1083 @@
+Database normalization is the process of organizing data in a relational database to reduce duplication and stop errors. It breaks big tables into smaller, linked tables using rules called normal forms.
+
+Why We Normalize Data
+Stop data copies.
+Keep data correct and safe.
+Make updates fast and easy.
+Stop bugs when adding or deleting rows
+
+The Main Normal Forms
+First Normal Form (1NF): Make every cell hold only one single value, and give the table a primary key.Second Normal Form (2NF): Must be in 1NF. Remove parts of data that do not depend on the whole primary key.
+Third Normal Form (3NF): Must be in 2NF. Remove columns that depend on other non-key columns instead of the primary key.
+
+A foreign key is a column or group of columns in one table that links to the primary key of another table. It builds a parent-child relationship between data, makes sure records match up correctly, and stops invalid data or broken links from being saved.Key ConceptsParent Table: The main table that holds the original primary key.Child Table: The secondary table that holds the foreign key pointing back to the parent.Referential Integrity: The rule that stops you from adding a child row with a missing parent or deleting a parent row while child rows still depend on it.Main BenefitsData Quality: Stops orphaned records where a child item points to a thing that does not exist.Easy Linking: Makes it simple to join tables together to pull related information.Simple Code ExampleYou can learn more about syntax details on W3Schools.sqlCREATE TABLE Customers (
+    CustomerID INT PRIMARY KEY,
+    Name VARCHAR(50)
+);
+
+CREATE TABLE Orders (
+    OrderID INT PRIMARY KEY,
+    OrderDate DATE,
+    CustomerID INT,
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
+);
+
+A many-to-many join table (also known as a junction, bridge, or associative table) is a structural table used in relational databases to link two other tables that have a many-to-many relationship. Relational databases like PostgreSQL, MySQL, and SQL Server cannot directly link two tables this way using a single foreign key; they require this third table to break the complex relationship down into two simple one-to-many relationships.Why Join Tables are EssentialAvoids Data Duplication: You do not have to repeat entity details multiple times just to show a new connection.Avoids Unnormalized Data: It eliminates the bad practice of storing comma-separated lists of IDs inside a single text column.Allows Meta-Data Storage: It serves as a perfect place to store information about the relationship itself (e.g., the date a user liked a post).Core Structure of a Join TableA classic example is a system where Students can enroll in multiple Courses, and each Course contains multiple Students.[ Students ] 1 ------ * [ Enrolled_Courses ] * ------ 1 [ Courses ]
+1. The Main TablessqlCREATE TABLE Students (
+    StudentID INT PRIMARY KEY,
+    StudentName VARCHAR(100)
+);
+
+CREATE TABLE Courses (
+    CourseID INT PRIMARY KEY,
+    CourseTitle VARCHAR(100)
+);
+Use code with caution.2. The Join TableThe join table maps connections by holding the primary keys of both main tables as foreign keys.sqlCREATE TABLE Enrolled_Courses (
+    StudentID INT,
+    CourseID INT,
+    EnrollmentDate DATE DEFAULT CURRENT_DATE, -- Optional relationship attribute
+    PRIMARY KEY (StudentID, CourseID),        -- Composite Primary Key prevents duplicates
+    FOREIGN KEY (StudentID) REFERENCES Students(StudentID) ON DELETE CASCADE,
+    FOREIGN KEY (CourseID) REFERENCES Courses(CourseID) ON DELETE CASCADE
+);
+Use code with caution.How to Query a Join TableTo pull data across a many-to-many relationship, you must execute a double JOIN statement. You start at one entity table, join into the bridge table, and then join out into the destination entity table.sqlSELECT 
+    s.StudentName, 
+    c.CourseTitle,
+    e.EnrollmentDate
+FROM Students s
+JOIN Enrolled_Courses e ON s.StudentID = e.StudentID
+JOIN Courses c ON e.CourseID = c.CourseID;
+Use code with caution.Best Practices for Designing Join Tables
+Use Composite Primary Keys: Set the combination of both foreign keys as the unique PRIMARY KEY to block accidental duplicate rows.
+Index the Foreign Keys: Ensure both foreign key columns are indexed to maintain fast query speeds as your data grows.
+Enforce Cascade Deletes: Use ON DELETE CASCADE constraints so that if a student or course is deleted, the corresponding connection rows are cleaned up automatically.
+
+kya product table join table hai 
+
+Nahi ❌ PRODUCT table join table nahi hai.
+
+Is example mein:
+
+PRODUCT
+
+Product_ID → Primary Key
+Product_Name
+Supplier_ID → Foreign Key
+
+Ye normal/entity table hai.
+
+JOIN TABLE
+
+ORDER_PRODUCT hi join table hai:
+
+Order_ID	Product_ID	Quantity
+O01	P01	1
+O01	P02	2
+O02	P01	1
+
+Ye ORDER aur PRODUCT ko connect karti hai.
+
+ORDER ↔ ORDER_PRODUCT ↔ PRODUCT
+
+Ye basically many-to-many relationship ko represent karti hai. ✅
+
+ok yni k jis table main do primary keys hon wo?
+
+Haan, aksar join table mein do columns hote hain jo mil kar composite primary key banate hain. ✅
+
+Jaise:
+
+ORDER_PRODUCT
+
+Order_ID → FK
+Product_ID → FK
+(Order_ID, Product_ID) → Composite Primary Key
+
+Lekin ek correction: sirf do primary-key columns hona hi join table ki guarantee nahi hai. Main concept ye hai ke table do entities ke relationship ko represent/connect kar rahi ho.
+
+Simple rule:
+👉 ORDER_PRODUCT = Join table
+👉 (Order_ID, Product_ID) = Composite PK
+👉 Dono = Foreign Keys bhi ہیں.
+
+yni k jis table main do fk ajayen jo k apne tables main pk hain to wo join table hota hai?
+
+Haan, bilkul sahi concept hai. ✅
+
+Database design mein Many-to-Many (M:N) relationship ko directly implement karne ke bajaye hum usay JOIN/associative table ke through do One-to-Many (1:M) relationships mein break kar dete hain.
+
+Example:
+
+Original:
+ORDER ↔ PRODUCT = Many-to-Many
+
+Break karne ke baad:
+
+ORDER 1 → M ORDER_PRODUCT
+
+aur
+
+PRODUCT 1 → M ORDER_PRODUCT
+
+So:
+
+M:N → 1:M + 1:M ✅
+
+Iska faida ye hai ke relationship simple aur manageable ho jata hai, aur additional information jaise Quantity, Price, etc. bhi join table mein store kar sakte hain.
+
+ye concept tha many to many join tables ka?
+
+Haan, exactly! ✅ Yehi Many-to-Many + Join Table ka core concept tha.
+
+Short version:
+
+Many-to-Many:
+ORDER ↔ PRODUCT
+
+Ek order mein many products, aur ek product many orders mein.
+
+Directly store nahi karte, isliye JOIN TABLE banate hain:
+
+ORDER → ORDER_PRODUCT ← PRODUCT
+
+Phir M:N relationship break ho jata hai:
+
+M:N → 1:M + 1:M
+
+Aur ORDER_PRODUCT mein relationship-specific data bhi aa sakta hai:
+
+Order_ID | Product_ID | Quantity
+
+🔥 Exam mein yaad rakho:
+Many-to-Many relationship ko join table ke through do One-to-Many relationships mein represent kiya jata hai.
+
+yni k hum m:n ko join table ki help se one to many main borke krte hain
+
+Haan, bilkul sahi ✅
+
+Many-to-Many (M:N) relationship ko JOIN TABLE ki help se do One-to-Many (1:M) relationships mein break/represent karte hain.
+
+Example:
+
+ORDER ↔ PRODUCT = M:N
+
+JOIN TABLE:
+
+ORDER → ORDER_PRODUCT ← PRODUCT
+
+Result:
+
+ORDER 1 : M ORDER_PRODUCT
+PRODUCT 1 : M ORDER_PRODUCT
+🔥 One-line exam answer:
+
+“A Many-to-Many relationship is resolved using a junction/join table, which converts it into two One-to-Many relationships.”
+
+mujhe wese ye topic theoretical focus k tor pr diya gya hai
+
+Haan, phir aapko deep coding ki zaroorat nahi. 👍
+
+Aapke syllabus mein “Theoretical Focus: ORM mechanics (Django ORM & SQLAlchemy)” diya hai, to aapko mainly ye samajhna hai:
+
+ORM mein kya hota hai?
+
+1. Object → Table
+
+Python Class  →  Database Table
+
+2. Attribute → Column
+
+student.name  →  name column
+student.age   →  age column
+
+3. Object → Row
+
+Student object  →  Student table ki row
+ORM ka basic flow
+Python Code
+     ↓
+    ORM
+     ↓
+SQL Query
+     ↓
+Database
+Django ORM
+
+Django mein ORM built-in hai.
+
+Student.objects.all()
+
+ORM internally SQL generate karta hai:
+
+SELECT * FROM student;
+SQLAlchemy
+
+SQLAlchemy bhi Python objects/classes ko database tables se map karta hai, lekin ye framework-independent ORM/toolkit hai.
+
+Exam ke liye main points
+ORM = Object-Relational Mapping
+Python objects/classes ko database tables se map karta hai.
+Direct SQL likhne ki need kam karta hai.
+Django ORM → Django ka built-in ORM.
+SQLAlchemy → Python ka independent ORM/toolkit.
+Class → Table
+Object → Row
+Attribute → Column
+ORM → Python aur relational database ke beech bridge.
+
+Aapke theoretical focus ke liye itna concept strong hona kaafi hai. Coding sirf examples samajhne ke liye dekhni hai, complete ORM project banane ki zaroorat nahi.
+
+Bilkul. Theoretical focus ke liye ek chhota practical example dekho:
+
+from sqlalchemy import create_engine, String
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class Student(Base):
+    __tablename__ = "students"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(100))
+    age: Mapped[int]
+
+
+engine = create_engine("sqlite:///school.db")
+
+Base.metadata.create_all(engine)
+
+SQLAlchemy ki modern 2.x documentation mein DeclarativeBase, Mapped aur mapped_column() isi tarah Python class ko database table se map karne ke liye use hote hain.
+
+Is code ko bas itna samjho:
+class Student       → students table
+
+id                  → id column (PK)
+name                → name column
+age                 → age column
+
+Aur:
+
+Base.metadata.create_all(engine)
+
+ka matlab hai:
+
+Jo tables humne Python classes mein define kiye hain, unko database mein create karo.
+
+Yahi ORM mechanics ka core idea hai: Python class → database table mapping.
+
+nhi aik line ki jese Django ORM ki di hai
+
+Haan, SQLAlchemy mein one-line example:
+
+session.query(Student).all()
+
+Matlab roughly Django ORM ke:
+
+Student.objects.all()
+
+Django ORM: Student.objects.all()
+SQLAlchemy ORM: session.query(Student).all()
+
+Dono ka purpose: Student table ke saare records retrieve karna.
+
+to iski kya reason hai k SQLAlchemy jo hai wo framework-independetn hai 
+
+Haan, iski reason simple hai:
+
+Django ORM
+
+Django ORM Django framework ka built-in part hai.
+
+Django → Django ORM → Database
+
+Isliye Django ORM ko normally Django project ke context mein use karte ho.
+
+SQLAlchemy
+
+SQLAlchemy khud ek independent Python library/toolkit hai. Ye kisi ek web framework ke saath permanently tied nahi hai.
+
+Python App
+    ↓
+SQLAlchemy
+    ↓
+Database
+
+Isliye tum SQLAlchemy ko Flask, FastAPI, ya kisi custom Python application ke saath use kar sakte ho.
+
+Easy example
+
+Agar tumhare paas:
+
+Flask App
+
+hai, to tum usmein SQLAlchemy laga sakte ho.
+
+Agar:
+
+FastAPI App
+
+hai, tab bhi SQLAlchemy laga sakte ho.
+
+Agar:
+
+Normal Python Application
+
+hai, tab bhi SQLAlchemy use kar sakte ho.
+
+Isi wajah se kehte hain:
+
+SQLAlchemy is framework-independent because it does not depend on a specific web framework like Django.
+
+🔥 Exam difference:
+
+Django ORM: Django-specific, built into Django
+SQLAlchemy: Framework-independent, separate Python library
+
+Yes ✅ aapke diye hue Theoretical Focus ke saare topics cover ho gaye hain.
+
+Topic	Status
+Relational Database Normalization	✅ 1NF, 2NF, 3NF
+Foreign Keys	✅ PK ↔ FK relationship
+Many-to-Many Join Tables	✅ M:N → Join Table → 1:M + 1:M
+Django ORM	✅ Basic concept + example
+SQLAlchemy	✅ Basic concept + example
+ORM Mechanics	✅ Class → Table, Object → Row, Attribute → Column
+🔥 Overall
+
+Normalization → Foreign Keys → M:N/Join Tables → ORM → Django ORM vs SQLAlchemy
+
+So yes, theoretical focus complete hai. ✅
+
+Class → Table, Object → Row, Attribute → Column  what it means
+
+Ye ORM ka basic mapping concept hai. Simple example se:
+
+1. Class → Table
+
+Python mein:
+
+class Student:
+    name
+    age
+
+Database mein ORM is class ko table se map karta hai:
+
+Student class → Student table
+2. Object → Row
+
+Class ka ek object:
+
+student = Student("Ali", 20)
+
+Database mein ye ek row/record ko represent karega:
+
+id	name	age
+1	Ali	20
+
+So:
+
+Student object → Table ki ek Row
+3. Attribute → Column
+
+Class mein:
+
+student.name
+student.age
+
+Database mein:
+
+name → Column
+age  → Column
+Ek saath yaad karo 🔥
+Python                  Database
+
+Class      ─────────→   Table
+Object     ─────────→   Row
+Attribute  ─────────→   Column
+
+Example:
+
+class Student       → STUDENT table
+student = Ali       → Ali ki row
+student.name        → name column
+student.age         → age column
+
+Yehi ORM (Object-Relational Mapping) ka main idea hai.
+
+task 1 ki complete summary do
+
+Bilkul. Ye Task 1 ki complete summary hai, jo tum notes/report mein bhi use kar sakte ho.
+
+TASK 1 — DESIGN RELATIONAL MODELS FOR INVENTORY LEDGER
+Objective
+
+Inventory Ledger ke liye 5 relational models/tables design karna:
+
+Role
+User
+Product
+StockMovement
+AuditLog
+1. Role
+role_id    → Primary Key
+role_name
+
+Purpose: Users ke roles store karna, jaise Admin, Manager, Staff.
+
+2. User
+user_id    → Primary Key
+username
+email
+role_id    → Foreign Key
+
+role_id references:
+
+roles.role_id
+
+Relationship:
+
+ROLE 1 ───── M USER
+
+Ek role ke multiple users ho sakte hain.
+
+3. Product
+product_id      → Primary Key
+product_name
+current_stock
+
+Purpose: Inventory ke products aur unka current stock store karna.
+
+4. StockMovement
+movement_id     → Primary Key
+product_id      → Foreign Key
+user_id         → Foreign Key
+movement_type
+quantity
+movement_date
+
+Foreign Keys:
+
+product_id → products.product_id
+user_id    → users.user_id
+
+Relationships:
+
+USER    1 ───── M STOCK_MOVEMENT
+PRODUCT 1 ───── M STOCK_MOVEMENT
+
+Purpose: Stock ke IN aur OUT movements record karna.
+
+5. AuditLog
+audit_id       → Primary Key
+user_id        → Foreign Key
+action
+action_date
+
+Foreign Key:
+
+user_id → users.user_id
+
+Relationship:
+
+USER 1 ───── M AUDIT_LOG
+
+Purpose: Users ke actions ka record maintain karna.
+
+SQLAlchemy Implementation
+
+Humne Models.py mein SQLAlchemy models define kiye:
+
+Models.py
+    ↓
+Role
+User
+Product
+StockMovement
+AuditLog
+
+Aur:
+
+db = SQLAlchemy()
+
+se SQLAlchemy initialize kiya.
+
+app.py mein Flask application ke saath connect kiya:
+
+db.init_app(app)
+
+Aur:
+
+with app.app_context():
+    db.create_all()
+
+se database tables create ki.
+
+Database
+
+SQLite use kiya:
+
+inventory.db
+
+Successfully create hone ke baad output:
+
+Database and tables created successfully!
+Final Relationship Diagram
+             ROLE
+              │
+              │ 1:M
+              ↓
+             USER
+           /      \
+        1:M        1:M
+         ↓          ↓
+STOCK_MOVEMENT   AUDIT_LOG
+       ↑
+       │ M:1
+       │
+    PRODUCT
+Final Task Status
+Requirement	Status
+Role model	✅
+User model	✅
+Product model	✅
+StockMovement model	✅
+AuditLog model	✅
+Primary Keys	✅
+Foreign Keys	✅
+Relationships	✅
+SQLAlchemy implementation	✅
+SQLite database created	✅
+
+Task 1 = COMPLETE ✅
+
+Ab naturally Task 2 mein isi database par Raw SQL vs SQLAlchemy ORM queries likhni hain aur generated SQL inspect karna hai.
+
+
+TASK 2
+
+Ye bhi simple issue hai: Python ko Task1_Models module nahi mil raha.
+
+Tumhari structure likely ye hai:
+
+DATABASE NORMALIZATION, RELATIONSHIPS & ORM/
+│
+├── INVENTORY_LEDGER_RELATIONAL_MODELS/
+│   ├── Task1_Models.py
+│   └── app.py
+│
+└── ORM_VS_RAW_SQL TASK_2/
+    └── Task2_orm_vs_raw_sql.py
+
+Python jab Task 2 ke folder se run hota hai, to parent/Task 1 folder automatically import path mein nahi hota.
+
+Easiest solution
+
+Task 2 folder mein Task1_Models.py ki copy mat banao. Better structure:
+
+DATABASE NORMALIZATION, RELATIONSHIPS & ORM/
+│
+├── Task1_Models.py
+│
+├── app.py
+│
+└── ORM_VS_RAW_SQL TASK_2/
+    └── Task2_orm_vs_raw_sql.py
+
+Phir Task 2 mein:
+
+from Task1_Models import db, Product
+
+Aur parent folder se run karo:
+
+cd "D:\DEV HOUSE\Pyhton\DATABASE NORMALIZATION, RELATIONSHIPS & ORM"
+python "ORM_VS_RAW_SQL TASK_2\Task2_orm_vs_raw_sql.py"
+⚠️ Lekin ek aur important issue
+
+Task 1 mein jo inventory.db bana tha, uski location Flask/SQLite relative path ki wajah se potentially different ho sakti hai depending on app context/current working directory.
+
+Isliye pehle Task1_Models.py ka exact location aur tumhari folder structure confirm karna best hai.
+
+Agar tum mujhe dir ka output de do:
+
+dir
+
+aur Task 2 folder ke andar:
+
+dir
+
+to main tumhe exact command + import line de dunga.
+
+Acha, screenshot se structure clear hai. 👍
+
+Tumhare folders separate hain:
+
+DATABASE NORMALIZATION, RELATIONSHIPS & ORM
+│
+├── INVENTORY_LEDGER_RELATIONAL_MODELS TASK_1
+│   ├── Task1_Models.py
+│   └── app.py
+│
+└── ORM_VS_RAW_SQL TASK_2
+    └── Task2_orm_vs_raw_sql.py
+
+Isliye ye:
+
+from Task1_Models import db, Product
+
+directly kaam nahi karega, kyunki Task1_Models.py doosre folder mein hai.
+
+Best solution
+
+Task 2 ke liye models ko import karne ke bajaye, Task 1 ke folder ko Python path mein add karo.
+
+Task2_orm_vs_raw_sql.py ke top par:
+
+import sys
+from pathlib import Path
+
+sys.path.append(
+    str(Path(__file__).parent.parent / "INVENTORY_LEDGER_RELATIONAL_MODELS TASK_1")
+)
+
+from Task1_Models import db, Product
+
+Phir baaki code same reh sakta hai.
+
+Lekin ek important correction
+
+Task 1 mein tumhari file ka actual naam agar Models.py hai, Task1_Models.py nahi, to import ye hoga:
+
+from Models import db, Product
+
+Aur path:
+
+sys.path.append(
+    str(Path(__file__).parent.parent / "INVENTORY_LEDGER_RELATIONAL_MODELS TASK_1")
+)
+Tumhare screenshot ke hisaab se
+
+Task 1 folder ka naam:
+
+INVENTORY_LEDGER_RELATIONAL_MODELS TASK_1
+
+Task 2 folder:
+
+ORM_VS_RAW_SQL TASK_2
+
+Ye structure theek hai. ✅
+
+Bas mujhe Task 1 folder ke andar files ke exact names bata do (Models.py ya Task1_Models.py), phir main Task 2 ka exact corrected code de dunga.
+
+mujhe final code do task 2 ka
+
+Yes. Tumhari folder structure ke hisaab se Task 2 ka final code ye rakho.
+
+ORM_VS_RAW_SQL TASK_2/Task2_orm_vs_raw_sql.py
+import sys
+from pathlib import Path
+
+from flask import Flask
+from sqlalchemy import text, select
+
+# Task 1 ke models wale folder ko Python path mein add karna
+task1_folder = (
+    Path(__file__).parent.parent
+    / "INVENTORY_LEDGER_RELATIONAL_MODELS TASK_1"
+)
+
+sys.path.append(str(task1_folder))
+
+from Task1_Models import db, Product
+
+
+# Flask application
+app = Flask(__name__)
+
+# Task 1 ke same database ko use karna
+database_path = task1_folder / "instance" / "inventory.db"
+
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    f"sqlite:///{database_path}"
+)
+
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db.init_app(app)
+
+
+with app.app_context():
+
+    # ==========================================
+    # 1. RAW SQL - SELECT ALL PRODUCTS
+    # ==========================================
+
+    print("\n========== RAW SQL ==========")
+
+    raw_sql = text("SELECT * FROM products")
+
+    result = db.session.execute(raw_sql)
+
+    for row in result:
+        print(row)
+
+
+    # ==========================================
+    # 2. ORM - SELECT ALL PRODUCTS
+    # ==========================================
+
+    print("\n========== ORM ==========")
+
+    products = db.session.execute(
+        select(Product)
+    ).scalars().all()
+
+    for product in products:
+        print(
+            product.product_id,
+            product.product_name,
+            product.current_stock
+        )
+
+
+    # ==========================================
+    # 3. ORM QUERY
+    # ==========================================
+
+    print("\n========== ORM FILTER ==========")
+
+    statement = select(Product).where(
+        Product.product_name == "Laptop"
+    )
+
+    products = db.session.execute(
+        statement
+    ).scalars().all()
+
+    for product in products:
+        print(
+            product.product_id,
+            product.product_name,
+            product.current_stock
+        )
+
+
+    # ==========================================
+    # 4. GENERATED SQL FROM ORM
+    # ==========================================
+
+    print("\n========== GENERATED SQL ==========")
+
+    print(
+        statement.compile(
+            compile_kwargs={"literal_binds": True}
+        )
+    )
+
+
+    # ==========================================
+    # 5. ORM INSERT
+    # ==========================================
+
+    print("\n========== ORM INSERT ==========")
+
+    new_product = Product(
+        product_name="Keyboard",
+        current_stock=25
+    )
+
+    db.session.add(new_product)
+    db.session.commit()
+
+    print("Product inserted using ORM.")
+
+
+    # ==========================================
+    # 6. RAW SQL INSERT
+    # ==========================================
+
+    print("\n========== RAW SQL INSERT ==========")
+
+    db.session.execute(
+        text("""
+            INSERT INTO products
+            (product_name, current_stock)
+            VALUES (:name, :stock)
+        """),
+        {
+            "name": "Mouse",
+            "stock": 50
+        }
+    )
+
+    db.session.commit()
+
+    print("Product inserted using Raw SQL.")
+
+
+    # ==========================================
+    # 7. SHOW ALL PRODUCTS AGAIN
+    # ==========================================
+
+    print("\n========== FINAL PRODUCTS ==========")
+
+    products = db.session.execute(
+        select(Product)
+    ).scalars().all()
+
+    for product in products:
+        print(
+            f"ID: {product.product_id} | "
+            f"Name: {product.product_name} | "
+            f"Stock: {product.current_stock}"
+        )
+Run command
+
+Tum Task 2 folder mein ho, to:
+
+python Task2_orm_vs_raw_sql.py
+Ye Task 2 mein kya demonstrate karega?
+RAW SQL
+SELECT * FROM products
+        ↓
+Database
+
+
+ORM
+select(Product)
+        ↓
+SQLAlchemy
+        ↓
+Generated SQL
+        ↓
+Database
+
+Aur:
+
+ORM INSERT → Python Product object → SQL → Database
+RAW SQL INSERT → Direct SQL → Database
+⚠️ Important
+
+Code mein ye line:
+
+from Task1_Models import db, Product
+
+tabhi correct hai agar Task 1 ki file ka actual naam Task1_Models.py hai.
+
+Agar actual naam Models.py hai, sirf ye line change karo:
+
+from Models import db, Product
+
+Baaki code same rahega.
+
+
+TASK 3 — UNDERSTANDING
+
+Topic: DATABASE MIGRATIONS WITH ALEMBIC & DJANGO
+
+The purpose of this task is to understand database migrations—how changes in your models are converted into migration scripts and then applied to the database in a controlled and repeatable way.
+
+1. What is a migration?
+
+Suppose you create a model:
+
+Product
+├── id
+├── name
+└── price
+
+The database doesn't automatically know that you want a products table.
+
+A migration is a script that describes the database schema change:
+
+Python Model
+     ↓
+Migration Script
+     ↓
+Database Schema
+2. Flask-SQLAlchemy + Alembic
+
+In your task, you created:
+
+class Product(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    price = db.Column(db.Float, nullable=False)
+
+Flask-SQLAlchemy stores this schema information in:
+
+db.metadata
+
+You verified this with:
+
+python -c "from Task3_Migrations import db; print(db.metadata.tables)"
+
+and Alembic used that metadata to compare your Python models with the database.
+
+The command you used:
+alembic revision --autogenerate -m "create products table"
+
+Alembic detected:
+
+Detected added table 'products'
+
+and generated:
+
+63318ff55dbe_create_products_table.py
+
+This is the migration script.
+
+3. Applying the migration
+
+You then ran:
+
+alembic upgrade head
+
+This told Alembic:
+
+Apply all migrations until the latest migration.
+
+Your output:
+
+Running upgrade -> 63318ff55dbe, create products table
+
+means the migration was successfully applied to the database.
+
+4. Why not db.create_all()?
+
+This is an important part of the task.
+
+db.create_all() simply creates missing tables.
+
+It doesn't give you a proper history of schema changes.
+
+With Alembic:
+
+Model Change
+     ↓
+Migration Script
+     ↓
+Migration History
+     ↓
+Database
+
+For example, later you might add:
+
+description = db.Column(db.String(255))
+
+You can generate another migration:
+
+alembic revision --autogenerate -m "add product description"
+
+Then apply it:
+
+alembic upgrade head
+
+Now the database can be updated in a controlled way.
+
+5. Django migrations
+
+Django does essentially the same thing but provides its own migration system.
+
+You change your model:
+
+class Product(models.Model):
+    name = models.CharField(max_length=100)
+    price = models.FloatField()
+
+Then:
+
+python manage.py makemigrations
+
+This generates the migration file.
+
+Then:
+
+python manage.py migrate
+
+This applies the migration to the database.
+
+So:
+
+Django Model
+     ↓
+makemigrations
+     ↓
+Migration File
+     ↓
+migrate
+     ↓
+Database
+6. Alembic vs Django
+Flask + Alembic	Django
+alembic revision --autogenerate	makemigrations
+Generates migration	Generates migration
+alembic upgrade head	migrate
+Applies migration	Applies migration
+Uses SQLAlchemy metadata	Uses Django model definitions
+External migration tool	Built into Django
+Easy way to remember
+ALEMBIC
+revision → CREATE migration
+upgrade  → APPLY migration
+
+
+DJANGO
+makemigrations → CREATE migration
+migrate        → APPLY migration
+One-line understanding for your viva
+
+Task 3 demonstrates how Flask-SQLAlchemy uses Alembic and Django uses its built-in migration system to generate deterministic migration scripts from model changes and safely apply those changes to the database.
+
+Yes, exactly. ✅
+
+In very simple words:
+
+The purpose of this task is to write/generate scripts that record the changes made to the models, and then apply those changes to the database.
+
+For example:
+
+Change Model
+     ↓
+Generate Migration Script
+     ↓
+Apply Migration Script
+     ↓
+Database Updated
+In your Task 3:
+
+Flask:
+
+Model Change
+     ↓
+Alembic revision --autogenerate
+     ↓
+Migration Script
+     ↓
+alembic upgrade head
+     ↓
+Database Updated
+
+Django:
+
+Model Change
+     ↓
+makemigrations
+     ↓
+Migration Script
+     ↓
+migrate
+     ↓
+Database Updated
+
+So yes, your understanding is correct. 👍
+
+Your three Daily Tasks are now:
+
+TASK 1 → Relational Models          ✅
+TASK 2 → Raw SQL + ORM              ✅
+TASK 3 → Alembic + Django Migration ✅
+
+Overall: COMPLETE ✅
