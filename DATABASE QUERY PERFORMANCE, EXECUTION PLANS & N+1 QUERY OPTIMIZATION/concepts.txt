@@ -1,0 +1,1209 @@
+DATABASE QUERY PERFORMANCE — THEORETICAL FOCUS
+1. Database Query Performance
+
+Database query performance refers to how efficiently a database processes a query and returns the required data.
+
+The main performance factors are:
+
+Execution time — how long the query takes.
+Query count — number of queries sent to the database.
+Rows scanned — number of rows the database examines.
+Rows returned — number of rows returned to the application.
+CPU and memory usage — resources required to process the query.
+Disk I/O — amount of data read from storage.
+Network latency — time required for communication between application and database.
+Example
+Efficient:
+Application → Database → Result
+
+Inefficient:
+Application → Database → Result
+Application → Database → Result
+Application → Database → Result
+...
+
+A query that runs quickly once can still cause a performance problem if the application executes it thousands of times.
+
+2. Execution Plans
+
+An execution plan is the strategy chosen by the database to execute a SQL query.
+
+When you send:
+
+SELECT *
+FROM products
+WHERE category_id = 5;
+
+the database optimizer determines how to find those rows.
+
+Conceptually:
+
+SQL Query
+    ↓
+Parser
+    ↓
+Query Optimizer
+    ↓
+Execution Plan
+    ↓
+Database Operations
+    ↓
+Result
+
+An execution plan can show operations such as:
+
+Table/Sequential Scan
+Index Scan
+Index Lookup
+Joins
+Sorting
+Filtering
+Estimated rows
+Actual rows
+Cost of operations
+EXPLAIN
+
+Most relational databases provide an EXPLAIN command:
+
+EXPLAIN
+SELECT *
+FROM products
+WHERE category_id = 5;
+
+Some databases also provide:
+
+EXPLAIN ANALYZE
+SELECT *
+FROM products
+WHERE category_id = 5;
+
+EXPLAIN helps you understand how the database plans to execute the query, while EXPLAIN ANALYZE can provide actual execution information when supported.
+
+3. Database Indexes
+
+An index is a database data structure designed to make finding rows more efficient.
+
+Without an index:
+
+Table
+ ↓
+Check many/all rows
+ ↓
+Find matching row
+
+With an appropriate index:
+
+Index
+ ↓
+Find matching value
+ ↓
+Locate required row
+
+For example:
+
+CREATE INDEX idx_products_category
+ON products(category_id);
+
+Now queries filtering by category_id may be able to use that index.
+
+Advantages
+Faster data retrieval
+Faster filtering
+Can improve joins
+Can improve certain sorting operations
+Disadvantages
+Requires additional storage
+Indexes need maintenance
+Can make INSERT, UPDATE, and DELETE more expensive
+
+Therefore, indexes should be created based on actual query patterns rather than adding them to every column.
+
+4. Avoiding Unnecessary Database Round-Trips
+
+A database round-trip occurs when the application communicates with the database and receives a response.
+
+For example:
+
+Application
+    ↓
+SQL Query
+    ↓
+Database
+    ↓
+Result
+    ↓
+Application
+
+Every unnecessary round-trip adds overhead.
+
+Suppose you retrieve 1,000 products:
+
+1 query → Get products
+1000 queries → Get each product's category
+
+Total = 1001 queries
+
+Even if each individual query is fast, repeatedly communicating with the database can significantly increase overall execution time.
+
+The goal is to retrieve the required data efficiently while avoiding unnecessary requests.
+
+5. N+1 Query Problem
+
+The N+1 query problem is a common example of unnecessary database round-trips.
+
+It occurs when:
+
+1 query → Retrieve N records
+N queries → Retrieve related data individually
+
+Therefore:
+
+Total queries = N + 1
+
+For 1,000 records:
+
+1 + 1000 = 1001 queries
+
+Instead of repeatedly requesting related data, applications can use techniques such as:
+
+Django:
+select_related()
+prefetch_related()
+
+SQLAlchemy:
+joinedload()
+subqueryload()
+
+These are forms of eager loading that allow related data to be loaded more efficiently.
+
+6. Main Performance Principle
+
+The overall goal is:
+
+GOOD DATABASE PERFORMANCE
+        ↓
+Efficient Queries
+        +
+Appropriate Indexes
+        +
+Good Execution Plans
+        +
+Fewer Unnecessary Round-Trips
+        +
+Avoiding N+1 Queries
+
+So the four core concepts for today's theoretical focus are:
+
+1. Database Query Performance
+2. Execution Plans
+3. Database Indexes
+4. Avoiding Unnecessary Database Round-Trips
+
+for ex when we write select all from products this is 1 query then it hsa to retrieve 1000 product it will be total 1001 queries?
+
+No. SELECT * FROM products is only 1 query, regardless of whether it returns 10, 1,000, or 1,000,000 products.
+
+Example
+SELECT * FROM products;
+
+If it returns 1,000 products:
+
+1 SQL query
+       ↓
+Database retrieves 1,000 rows
+       ↓
+Returns 1,000 rows
+
+Total = 1 query, not 1,001.
+
+When does it become N+1?
+
+Suppose each product has a category:
+
+products = Product.objects.all()   # 1 query
+
+for product in products:
+    print(product.category.name)   # additional query for each product
+
+Then:
+
+1 query → Get 1,000 products
++
+1 query → Category of product 1
+1 query → Category of product 2
+1 query → Category of product 3
+...
+1 query → Category of product 1000
+
+Total = 1,001 queries
+
+So remember:
+
+1 query can return 1,000 rows. N+1 happens when you make additional queries for each of those rows.
+
+ok when we need to know about each product category for 1000 products then it will be 1 query who retrieves all records and then for 1000 products 1000 queries will executed whom gives us their categories and then 1001 queries will present/
+
+Exactly. 👍
+
+If your code first gets the 1,000 products:
+
+SELECT * FROM products;
+
+that's 1 query.
+
+Then, if you separately ask the database for each product's category:
+
+1 query  → Get all 1,000 products
+
++ 1 query → Category of Product 1
++ 1 query → Category of Product 2
++ 1 query → Category of Product 3
+...
++ 1 query → Category of Product 1000
+
+Then:
+
+1 + 1,000 = 1,001 queries ✅
+
+This is the N+1 query problem.
+
+Optimized approach
+
+Instead of doing 1,001 queries, you use eager loading so the database retrieves the products and their categories efficiently.
+
+For example, Django:
+
+products = Product.objects.select_related("category")
+
+Conceptually:
+
+Products + Categories
+       ↓
+Efficient database operation
+       ↓
+No 1,000 individual category queries
+
+So the key difference is:
+
+Normal: 1 + N = N+1 queries ❌
+Eager loading: related data loaded efficiently ✅
+
+also give me example for SQLAlchemy
+
+Yes. In SQLAlchemy, the same N+1 problem can happen.
+
+Suppose we have:
+
+Product
+   ↓
+Category
+
+Each product belongs to one category.
+
+❌ N+1 problem in SQLAlchemy
+products = session.query(Product).all()
+
+This executes:
+
+1 query → Get 1,000 products
+
+Then:
+
+for product in products:
+    print(product.category.name)
+
+If category is lazily loaded, SQLAlchemy may execute an additional query for each product:
+
+1 query  → Get 1,000 products
+
+1 query  → Category for Product 1
+1 query  → Category for Product 2
+1 query  → Category for Product 3
+...
+1 query  → Category for Product 1000
+
+Therefore:
+
+1 + 1000 = 1001 queries
+
+That's the N+1 query problem.
+
+✅ Fix with joinedload()
+
+SQLAlchemy provides joinedload() for eager loading:
+
+from sqlalchemy.orm import joinedload
+
+products = (
+    session.query(Product)
+    .options(joinedload(Product.category))
+    .all()
+)
+
+for product in products:
+    print(product.category.name)
+
+Now SQLAlchemy loads the products and their categories using an eager-loading strategy based on a JOIN.
+
+Conceptually:
+
+Without joinedload:
+
+Query 1 → 1,000 Products
+Query 2 → Category 1
+Query 3 → Category 2
+...
+Query 1001 → Category 1000
+
+
+With joinedload():
+
+Query → Products + Categories
+
+So instead of 1,001 unnecessary queries, you avoid the per-product category queries.
+
+subqueryload()
+
+SQLAlchemy also provides:
+
+from sqlalchemy.orm import subqueryload
+
+products = (
+    session.query(Product)
+    .options(subqueryload(Product.category))
+    .all()
+)
+
+This uses a separate eager-loading query rather than loading the relationship through the same JOIN.
+
+Easy comparison
+Django
+────────────────────────
+select_related()    → JOIN-style eager loading
+prefetch_related()  → Separate query eager loading
+
+
+SQLAlchemy
+────────────────────────
+joinedload()        → JOIN-style eager loading
+subqueryload()      → Separate query eager loading
+
+So for your task, you can demonstrate the same N+1 problem in both Django and SQLAlchemy, then fix it with their respective eager-loading strategies.
+
+Yes. Eager loading is one of the main solutions to the N+1 problem.
+
+🧠 Easy concept
+
+Instead of saying:
+
+"Give me the product first, and I'll come back for its category later."
+
+you say:
+
+"Give me the products AND their categories together."
+
+❌ Without eager loading
+Application → Database: Give me 1,000 products
+Database → Application
+
+Then:
+
+Application → Database: Give category of product 1
+Database → Application
+
+Application → Database: Give category of product 2
+Database → Application
+
+...
+
+➡️ 1,001 queries / round-trips
+
+✅ With eager loading
+
+You tell the ORM in advance that you need the categories.
+
+Application → Database: Give me products + their categories
+Database → Application: Here they are
+
+➡️ Far fewer database round-trips
+
+The ORM loads the related data efficiently before you access it.
+
+Django
+products = Product.objects.select_related("category")
+SQLAlchemy
+products = session.query(Product).options(
+    joinedload(Product.category)
+).all()
+🔑 Remember
+Lazy Loading:
+Get product → Later ask for category → More queries ❌
+
+Eager Loading:
+Get product + category together → Fewer queries ✅
+
+So eager loading = tell the ORM beforehand which related data you will need, so it doesn't make a separate database trip for every object.
+
+i am talking about solution many unnecessary round trips
+
+Yes — eager loading is specifically one solution for avoiding unnecessary database round-trips, especially when the unnecessary trips are caused by an N+1 pattern.
+
+Simple example
+
+You need 1,000 products + their categories.
+
+❌ Unnecessary round-trips
+Round-trip 1:
+App → DB: Give me 1,000 products
+DB → App: Here they are
+
+Round-trip 2:
+App → DB: Give category of product 1
+DB → App: Category 1
+
+Round-trip 3:
+App → DB: Give category of product 2
+DB → App: Category 2
+
+...
+
+Round-trip 1001:
+App → DB: Give category of product 1000
+DB → App: Category 1000
+
+Total = 1,001 round-trips ❌
+
+✅ Eager loading
+
+You tell the ORM:
+
+"I know I'll need the categories, so load them efficiently with the products."
+
+Round-trip 1:
+App → DB: Give me products + their categories
+DB → App: Here they are
+
+Depending on the eager-loading strategy, the ORM may use one query or a small number of queries.
+
+Result: dramatically fewer round-trips ✅
+
+🔑 The main idea
+
+Avoiding unnecessary round-trips means:
+
+Don't keep going back to the database for data you could have loaded efficiently in advance.
+
+Eager loading is one technique for doing that.
+
+Other techniques include:
+
+Eager loading → select_related, prefetch_related, joinedload, etc.
+Batching → request many records in one operation.
+Proper JOINs → retrieve related data together when appropriate.
+Caching → avoid asking the database for data you already have.
+
+So your theoretical chain is:
+
+Unnecessary round-trips → N+1 problem → Eager loading/batching/JOINs → Fewer database communications.
+
+so why we cant get the effiecient results without eadger laoding
+
+You can get efficient results without eager loading. Eager loading is just a convenient ORM technique for telling it how to fetch related data efficiently.
+
+The important thing is how the data is fetched, not the word "eager loading."
+
+Example
+
+You need:
+
+1,000 Products + their Categories
+❌ Without eager loading, using lazy loading
+Get 1,000 products → 1 query
+
+Product 1 → ask DB for category → 1 query
+Product 2 → ask DB for category → 1 query
+...
+Product 1000 → ask DB for category → 1 query
+
+Total = 1,001 queries
+
+The ORM doesn't know that you're going to need every category, so it loads each relationship when you access it.
+
+✅ Without ORM eager loading, you could write an efficient JOIN yourself
+
+For example:
+
+SELECT products.*, categories.name
+FROM products
+JOIN categories
+    ON products.category_id = categories.id;
+
+Now the database can retrieve the products and categories together.
+
+So:
+
+Efficient JOIN
+      ↓
+Few database round-trips
+
+No select_related() or joinedload() is required.
+
+Then why use eager loading?
+
+Because you're using an ORM.
+
+Instead of manually writing:
+
+JOIN ...
+
+you can tell the ORM:
+
+# Django
+Product.objects.select_related("category")
+
+or:
+
+# SQLAlchemy
+joinedload(Product.category)
+
+The ORM handles the efficient loading strategy for you.
+
+🧠 The key concept
+
+Eager loading is not the only way to avoid unnecessary round-trips.
+
+Think of it like this:
+
+Goal:
+Avoid unnecessary database round-trips
+             ↓
+       ┌─────┴─────┐
+       ↓           ↓
+   Eager Loading   Manual SQL/JOINs
+       ↓           ↓
+ ORM handles      You control
+ the strategy     the query
+
+So eager loading is a solution to the problem, not the definition of efficient database access itself.
+
+so my theoratical focus is complete?
+
+Yes. ✅ Your theoretical focus is complete.
+
+Your original focus was:
+
+Database Query Performance ✅
+Execution time
+Query count
+Rows scanned
+CPU/I/O considerations
+Execution Plans ✅
+EXPLAIN
+EXPLAIN ANALYZE
+Table scans
+Index scans
+Query optimizer
+Indexes ✅
+What indexes are
+How they improve lookups
+Primary/composite indexes
+Advantages and trade-offs
+Avoiding Unnecessary Database Round-Trips ✅
+What a round-trip is
+Why many round-trips are expensive
+N+1 query problem
+Batching/JOINs
+Eager loading as an ORM solution
+ORM Optimization ✅
+Django: select_related(), prefetch_related()
+SQLAlchemy: joinedload(), subqueryload()
+Final concept to remember
+Query Performance
+      ↓
+Execution Plans + Indexes
+      ↓
+Identify inefficient queries
+      ↓
+N+1 / unnecessary round-trips
+      ↓
+Optimize with JOINs, batching, eager loading, etc.
+      ↓
+Fewer queries + better performance
+
+So yes — you have covered the complete theoretical focus for today. ✅
+
+so indexes are mainly the address we gave them database to get the specific filed like name of the product so it searches only for the product_name in the products table?
+
+Yes, your idea is basically correct, but one small correction:
+
+An index is not exactly an address that we give the database. It's more like a separate lookup structure that helps the database quickly find rows based on a particular column.
+
+Simple example
+
+Suppose your table is:
+
+PRODUCTS
+--------------------------------
+id | product_name | price
+--------------------------------
+1  | Laptop       | 1000
+2  | Mouse        | 20
+3  | Keyboard     | 50
+...
+
+You create an index on product_name:
+
+CREATE INDEX idx_product_name
+ON products(product_name);
+
+Now when you run:
+
+SELECT *
+FROM products
+WHERE product_name = 'Laptop';
+
+The database can use the product_name index to quickly locate the matching row instead of potentially checking every row in the table.
+
+Think of it like a book 📖
+
+Without an index:
+
+Database
+   ↓
+Check row 1
+Check row 2
+Check row 3
+...
+Check many rows
+   ↓
+Find "Laptop"
+
+With an index:
+
+Product Name Index
+       ↓
+"Laptop" → location/reference to matching row
+       ↓
+PRODUCTS table
+       ↓
+Get the row
+One important point
+
+The index doesn't mean the database only searches the product_name column and ignores the rest of the table.
+
+Rather:
+
+It uses product_name to quickly locate the relevant row, then retrieves the other required columns from that row.
+
+For example:
+
+SELECT product_name, price
+FROM products
+WHERE product_name = 'Laptop';
+
+The index helps find which row(s) match "Laptop", and then the database gets the price and other requested data.
+
+So your mental model can be:
+
+Index = a fast lookup system for a column → helps database find relevant rows quickly. ✅
+
+Exactly. ✅ Your understanding is correct.
+
+Indexes become especially useful as tables get large, such as 200,000 rows (2 lakh).
+
+For example:
+
+CREATE INDEX idx_product_name
+ON products(product_name);
+
+Then:
+
+SELECT *
+FROM products
+WHERE product_name = 'Laptop';
+
+The database can use the product_name index to quickly locate the matching row(s), instead of scanning a huge number of rows.
+
+Without index
+200,000 rows
+      ↓
+Check many rows
+      ↓
+Find "Laptop"
+      ↓
+Return data
+With index
+product_name INDEX
+       ↓
+Find "Laptop"
+       ↓
+Locate matching row(s)
+       ↓
+Get the requested data
+
+So your mental model is:
+
+Large table + frequently searched column → an appropriate index can make lookups much faster.
+
+One important detail: an index doesn't guarantee the database will use it. The query optimizer decides whether using the index is actually cheaper for that particular query.
+
+ok it is used by the query optimizer in ssearching the record or in execution of the query
+
+Yes — both, but the roles are slightly different.
+
+Simple flow
+SQL Query
+   ↓
+Query Optimizer
+   ↓
+Checks available indexes
+   ↓
+Chooses an efficient execution plan
+   ↓
+Executes the plan
+   ↓
+Returns results
+
+For example:
+
+SELECT *
+FROM products
+WHERE product_name = 'Laptop';
+
+The query optimizer looks at the query and asks:
+
+"Should I use the product_name index, or should I scan the table?"
+
+If the index is beneficial, it creates an execution plan that uses it.
+
+Then during execution, the database actually uses that index to find the matching record(s).
+
+So remember:
+
+Query optimizer → decides whether/how to use the index.
+Query execution → actually uses the chosen index to retrieve the data. ✅
+
+so optimzer gave or tell the query execution to choose the index or scan full table?
+
+Exactly. ✅
+
+The query optimizer decides the strategy, and the execution engine follows that strategy.
+
+SQL Query
+   ↓
+Query Optimizer
+   ↓
+"Use Index" OR "Full Table Scan"
+   ↓
+Execution Engine
+   ↓
+Retrieve the data
+Example
+
+You write:
+
+SELECT *
+FROM products
+WHERE product_name = 'Laptop';
+
+The optimizer checks things like:
+
+Is there an index on product_name?
+How many rows are in the table?
+How many rows are expected to match?
+Would using the index actually be faster?
+
+Then it might choose:
+
+Option 1:
+Use product_name index
+       ↓
+Find "Laptop"
+       ↓
+Get matching rows
+
+or:
+
+Option 2:
+Full table scan
+       ↓
+Check rows
+       ↓
+Find "Laptop"
+
+So:
+
+Optimizer = decides HOW to execute the query.
+Execution engine = carries out that decision. ✅
+
+
+Final Concepts — Eager Loading
+
+We used 4 eager-loading techniques in today's tasks:
+
+Django ORM
+├── select_related()
+└── prefetch_related()
+
+SQLAlchemy
+├── joinedload()
+└── subqueryload()
+1. Django — select_related()
+
+Used for: ForeignKey and OneToOneField
+
+It uses a SQL JOIN to retrieve related objects in the same query.
+
+Our example:
+
+InventoryItem
+      ↓ ForeignKey
+Product
+      ↓ ForeignKey
+Category
+
+Without eager loading:
+
+InventoryItem query
+       ↓
+Product query
+       ↓
+Category query
+
+With:
+
+InventoryItem.objects.select_related("product__category")
+
+Django uses JOINs and can retrieve everything in 1 query.
+
+InventoryItem + Product + Category
+              ↓
+          1 query
+
+Remember:
+
+select_related() = JOIN = best suited for single-valued relationships.
+
+2. Django — prefetch_related()
+
+Used for: Many-to-Many and reverse relationships, and it can also be used for ForeignKeys.
+
+Instead of using one large JOIN, Django performs separate queries and combines the results in Python.
+
+Example:
+
+InventoryItem.objects.prefetch_related(
+    "product__category"
+)
+
+Our result:
+
+Query 1 → InventoryItems
+Query 2 → Products
+Query 3 → Categories
+
+So:
+
+3 queries
+
+instead of:
+
+2,001 queries
+
+Remember:
+
+prefetch_related() = separate queries + Python combination = useful for collections/multiple related objects.
+
+3. SQLAlchemy — joinedload()
+
+Used for: Eager loading through SQL JOIN.
+
+Example:
+
+session.query(InventoryItem).options(
+    joinedload(
+        InventoryItem.product
+    ).joinedload(
+        Product.category
+    )
+).all()
+
+SQLAlchemy retrieves:
+
+InventoryItem
+      ↓ JOIN
+Product
+      ↓ JOIN
+Category
+
+Our result:
+
+1 query
+
+Remember:
+
+joinedload() = SQL JOIN-based eager loading.
+
+It is particularly useful when loading single related objects, such as:
+
+Product → Category
+4. SQLAlchemy — subqueryload()
+
+Used for: Eager loading through separate queries.
+
+Example:
+
+session.query(InventoryItem).options(
+    subqueryload(
+        InventoryItem.product
+    ).subqueryload(
+        Product.category
+    )
+).all()
+
+Instead of joining everything together, SQLAlchemy performs separate queries.
+
+Our result:
+
+Query 1 → InventoryItems
+Query 2 → Products
+Query 3 → Categories
+
+Therefore:
+
+3 queries
+
+Remember:
+
+subqueryload() = separate-query eager loading, useful especially when loading collections.
+
+🔥 The easiest way to remember all 4
+                    EAGER LOADING
+                         │
+            ┌────────────┴────────────┐
+            │                         │
+         DJANGO                   SQLALCHEMY
+            │                         │
+     ┌──────┴──────┐           ┌──────┴──────┐
+     │             │           │             │
+select_related  prefetch    joinedload   subqueryload
+     │             │           │             │
+    JOIN       Separate       JOIN       Separate
+                 queries                 queries
+Query comparison from our tasks
+N+1 Problem
+     ↓
+2,001 queries ❌
+
+Django select_related()
+     ↓
+1 query ✅
+
+Django prefetch_related()
+     ↓
+3 queries ✅
+
+SQLAlchemy joinedload()
+     ↓
+1 query ✅
+
+SQLAlchemy subqueryload()
+     ↓
+3 queries ✅
+One-line memory trick
+
+select_related() = Django JOIN
+prefetch_related() = Django separate queries
+joinedload() = SQLAlchemy JOIN
+subqueryload() = SQLAlchemy separate queries
+
+give me one line for both of sqlalchemy
+joinedload() → Loads related data using a SQL JOIN in the same query.
+subqueryload() → Loads related data using separate queries, then SQLAlchemy combines the results.
+give me the summary of all the tasks we have done so far
+DATABASE QUERY PERFORMANCE — TASK SUMMARY
+Folder
+DATABASE QUERY PERFORMANCE, EXECUTION PLANS & N+1 QUERY OPTIMIZATION
+└── N+1 QUERY OPTIMIZATION
+Task 1 — Inventory Data Setup
+
+File:
+
+Task1_InventoryDataSetup.py
+
+Created the test database and populated it with:
+
+Categories       → 10
+Products         → 100
+Inventory Items  → 1,000
+
+Database:
+
+inventory.db
+
+Purpose: Create enough data to demonstrate database query-performance problems.
+
+Task 2 — N+1 Query Problem
+
+File:
+
+Task2_NPlusOneQuery.py
+
+Intentionally accessed related objects inside a loop:
+
+InventoryItem
+      ↓
+   Product
+      ↓
+  Category
+
+This caused:
+
+1 query
+→ Inventory Items
+
+1,000 queries
+→ Products
+
+1,000 queries
+→ Categories
+Result
+TOTAL = 2,001 QUERIES
+
+This demonstrated the N+1 problem and unnecessary database round-trips.
+
+Task 3 — Django Eager Loading
+
+File:
+
+Task3_DjangoEagerLoading.py
+
+We fixed the N+1 problem using two Django ORM strategies.
+
+select_related()
+InventoryItem.objects.select_related(
+    "product__category"
+)
+
+Result:
+
+1,000 items
+→ 1 query
+
+It uses SQL JOINs.
+
+prefetch_related()
+InventoryItem.objects.prefetch_related(
+    "product__category"
+)
+
+Result:
+
+1,000 items
+→ 3 queries
+
+It uses separate queries and combines the results in Python.
+
+Task 4 — SQLAlchemy Eager Loading
+
+File:
+
+Task4_SQLAlchemy_Loading.py
+
+We demonstrated the SQLAlchemy equivalents.
+
+joinedload()
+joinedload(
+    InventoryItem.product
+).joinedload(
+    Product.category
+)
+
+Result:
+
+1 query
+
+Concept: SQL JOIN-based eager loading.
+
+subqueryload()
+subqueryload(
+    InventoryItem.product
+).subqueryload(
+    Product.category
+)
+
+Result:
+
+3 queries
+
+Concept: Separate-query eager loading.
+
+Final Results
+                    QUERIES
+                       │
+N+1 Problem         2,001 ❌
+                       │
+        ┌──────────────┴──────────────┐
+        │                             │
+      Django                      SQLAlchemy
+        │                             │
+select_related()                  joinedload()
+      1 query                       1 query
+        │                             │
+prefetch_related()                subqueryload()
+      3 queries                      3 queries
+What you learned
+Database Query Performance
+        ↓
+N+1 Query Problem
+        ↓
+Unnecessary Database Round-Trips
+        ↓
+Query Profiling
+        ↓
+Eager Loading
+        ↓
+Django ORM
+├── select_related()
+└── prefetch_related()
+        ↓
+SQLAlchemy ORM
+├── joinedload()
+└── subqueryload()
+The main lesson
+
+Instead of repeatedly querying the database inside a loop, load the required related data efficiently beforehand using eager-loading strategies.
+
+So your entire practical task set is complete. ✅
+
+Yes. ✅ You have completed the entire task.
+
+Theoretical Focus
+Database query performance ✅
+N+1 query problem ✅
+Execution/query behavior ✅
+Indexes and query optimization concepts ✅
+Avoiding unnecessary database round-trips ✅
+Query profiling/counting ✅
+Daily Tasks
+Task	Result	Status
+Create 1,000 inventory items	1,000 items created	✅
+Intentionally create N+1 pattern	2,001 queries	✅
+Profile database query count	Query count measured	✅
+Django select_related()	1 query	✅
+Django prefetch_related()	3 queries	✅
+SQLAlchemy joinedload()	1 query	✅
+SQLAlchemy subqueryload()	3 queries	✅
+Final comparison
+N+1 Problem
+    → 2,001 queries ❌
+
+Django
+    select_related()    → 1 query ✅
+    prefetch_related()  → 3 queries ✅
+
+SQLAlchemy
+    joinedload()        → 1 query ✅
+    subqueryload()      → 3 queries ✅
+
+So both the theoretical focus and all practical daily tasks are complete. 🎯
