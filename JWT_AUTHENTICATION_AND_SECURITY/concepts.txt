@@ -1,0 +1,305 @@
+This is your next backend security topic + practical task. It has two parts: theory first, then implementation/testing.
+
+1. Theoretical Focus
+
+You need to understand these three areas:
+
+A. Session-based vs. JWT authentication
+
+Session-based authentication
+
+User logs in.
+Server creates a session.
+Session ID is stored in a cookie.
+Server keeps session state.
+Every request uses the session ID to identify the user.
+
+JWT/stateless authentication
+
+User logs in.
+Server creates a signed JWT.
+Client sends the token with future requests.
+Server validates the token instead of storing a login session.
+The backend can remain largely stateless.
+
+Typical JWT flow:
+
+Login → Access Token + Refresh Token → Access Token used for API requests → Refresh Token gets a new Access Token
+
+Access token: short-lived and used to access protected routes.
+
+Refresh token: longer-lived and used to obtain a new access token.
+
+2. Password hashing: bcrypt vs Argon2
+
+Never store passwords like:
+
+password123
+
+Instead, store a password hash.
+
+Two important password-hashing algorithms:
+
+bcrypt — deliberately slow and includes a salt, making brute-force attacks harder.
+Argon2 — modern password-hashing algorithm designed to be resistant to GPU/parallel attacks and generally preferred for new applications.
+
+The important distinction:
+
+Password hashing is one-way; encryption is reversible.
+
+When a user logs in:
+
+Entered password
+       ↓
+Hash/verify against stored hash
+       ↓
+Correct → Login
+Wrong   → Reject
+3. SQL Injection Prevention
+
+SQL injection happens when user input is directly combined with SQL.
+
+Unsafe idea:
+
+query = f"SELECT * FROM users WHERE username = '{username}'"
+
+If the application treats user input as part of the SQL statement, an attacker may manipulate the query.
+
+With an ORM and parameterized queries, the user input is treated as data, not executable SQL.
+
+For example:
+
+User.query.filter_by(username=username).first()
+
+The ORM handles parameterization for you.
+
+Your security test should demonstrate that malicious input does not become SQL syntax and cannot bypass authentication or expose unintended records.
+
+Daily Tasks
+Task 1 — Implement JWT Authentication
+
+Build this flow:
+
+POST /login
+     ↓
+Verify username/password
+     ↓
+Generate access token
+Generate refresh token
+     ↓
+Return both tokens
+
+Then protect sensitive ledger endpoints:
+
+GET    /ledger
+POST   /ledger
+PUT    /ledger/<id>
+DELETE /ledger/<id>
+
+Requests without a valid access token should be rejected.
+
+Example:
+
+Authorization: Bearer <access_token>
+
+Your authorization flow should look like:
+
+Request
+   ↓
+JWT verification
+   ↓
+Token valid?
+  /     \
+No       Yes
+↓         ↓
+401     Check permission
+           ↓
+       Allowed?
+        /   \
+      No     Yes
+      ↓       ↓
+     403    Ledger
+Important distinction
+
+401 Unauthorized
+
+Usually means:
+
+The request does not have valid authentication credentials.
+
+Examples:
+
+No JWT
+Expired JWT
+Invalid JWT
+
+403 Forbidden
+
+Usually means:
+
+The user is authenticated, but doesn't have permission to perform this action.
+
+Example:
+
+User = normal_user
+Route = admin-only ledger operation
+→ 403 Forbidden
+Task 2 — Prove ORM SQL Injection Protection
+
+Create a test using malicious input such as a username containing SQL metacharacters.
+
+The goal isn't to attack a real system. The goal is to verify:
+
+Malicious input
+       ↓
+ORM parameterized query
+       ↓
+Input treated as data
+       ↓
+No SQL execution
+       ↓
+Expected authentication failure
+
+You should have an automated test proving the behavior.
+
+Task 3 — Authorization Tests
+
+Write tests for at least these cases:
+
+Test	Expected
+No JWT	401
+Invalid JWT	401
+Expired JWT	401
+Valid JWT + insufficient permission	403
+Valid JWT + correct permission	200/201/etc.
+SQL-injection-style username	Authentication fails safely
+Final objective
+
+By the end of today's work, you should be able to explain:
+
+Why sessions maintain server-side authentication state, why JWTs can provide stateless authentication, how access/refresh tokens work, why bcrypt/Argon2 are used for passwords, how ORMs prevent SQL injection through parameterized queries, and the difference between HTTP 401 and 403.
+
+Then you'll implement and test all of it in your backend.
+
+
+JWT AUTHENTICATION AND SECURITY — TASK SUMMARY
+TASK 01 — JWT AUTHENTICATION & AUTHORIZATION
+
+File:
+
+TASK_01_JWT_AUTHENTICATION.py
+What was implemented
+User registration with username, password, and role.
+Password hashing using Werkzeug's secure password hashing.
+JWT-based authentication.
+Access token generation.
+Refresh token generation.
+JWT refresh endpoint.
+Protected /ledger routes.
+Admin-only permission decorator.
+401 Unauthorized handling.
+403 Forbidden handling.
+Invalid and expired JWT handling.
+Admin/user role-based authorization.
+Tested successfully
+Admin registration          → 201 ✅
+Duplicate username          → 409 ✅
+Admin login                 → 200 ✅
+Access token                → Generated ✅
+Refresh token               → Generated ✅
+Protected ledger            → 200 ✅
+Missing JWT                 → 401 ✅
+Invalid JWT                 → 401 ✅
+Normal user → admin route   → 403 ✅
+Admin → admin route         → 201 ✅
+TASK 02 — SQL INJECTION PREVENTION
+
+File:
+
+TASK_02_SQL_INJECTION_PREVENTION.py
+What was implemented
+Flask-SQLAlchemy ORM.
+SQLite database.
+User model.
+Parameterized ORM queries.
+Safe user-search endpoint.
+Security-testing endpoint.
+SQL injection attack simulation.
+
+The main secure query was:
+
+User.query.filter_by(username=username).first()
+
+Instead of constructing SQL manually with user input.
+
+SQL injection tested
+
+Malicious input:
+
+' OR '1'='1
+
+Result:
+
+User not found
+sql_injection_prevented: true
+Result
+Normal query                  → SUCCESS ✅
+SQL injection attempt         → BLOCKED ✅
+Malicious input as data       → SUCCESS ✅
+Database query remains safe   → SUCCESS ✅
+TASK 03 — AUTOMATED SECURITY TESTING
+
+File:
+
+TASK_03_AUTHORIZATION_TESTS.py
+What was implemented
+
+Automated pytest security tests for:
+
+Missing JWT.
+Invalid JWT.
+Invalid login credentials.
+SQL injection prevention.
+Normal user authorization.
+Admin authorization.
+Valid authenticated access.
+Final test result
+collected 7 items
+
+
+test_unauthorized_request_returns_401     PASSED
+test_invalid_token_returns_401            PASSED
+test_invalid_login_returns_401            PASSED
+test_sql_injection_is_prevented           PASSED
+test_normal_user_gets_403                 PASSED
+test_admin_can_create_ledger              PASSED
+test_valid_user_can_access_ledger         PASSED
+
+
+==============================
+7 passed in 6.53s
+==============================
+🎯 OVERALL RESULT
+JWT Authentication             ✅
+Access/Refresh Tokens          ✅
+Password Hashing               ✅
+Role-Based Authorization       ✅
+Permission Decorators          ✅
+401 Unauthorized Handling      ✅
+403 Forbidden Handling         ✅
+SQL Injection Prevention       ✅
+ORM Parameterized Queries      ✅
+Automated Security Testing     ✅
+7/7 Pytest Tests Passed        ✅
+Final folder
+JWT_AUTHENTICATION_AND_SECURITY/
+│
+├── TASK_01_JWT_AUTHENTICATION.py
+├── TASK_02_SQL_INJECTION_PREVENTION.py
+├── TASK_03_AUTHORIZATION_TESTS.py
+│
+├── security.db
+├── sql_security.db
+└── .pytest_cache/
+
+Daily task status: COMPLETED ✅
