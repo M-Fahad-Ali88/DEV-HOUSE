@@ -1,0 +1,549 @@
+STATEFUL VS STATELESS BACKENDS — SUMMARY
+Stateful
+Server stores the client's state/session locally.
+Requests may depend on the same server's stored session/memory.
+If the server fails, another server may not have that session information.
+More difficult to scale horizontally.
+Stateless
+Server does not depend on local session/memory for the client's state.
+Each request can be handled independently.
+Required state can come from a shared database/storage or from the request itself (e.g., token).
+If one server fails, another server can handle the request.
+Generally easier to scale horizontally.
+Main Difference
+STATEFUL
+User → Server A → Server A's Local Session
+                    ↓
+                 User State
+
+
+STATELESS
+User → Server A ─┐
+      Server B ──┼→ Shared Database/Storage
+      Server C ──┘
+
+One-line definition:
+
+Stateful = depends on server-local state.
+Stateless = does not depend on server-local state, so any server can handle the request.
+
+Yes — that's one of the main reasons, but with one clarification.
+
+In a stateless architecture, shared storage/database helps remove the dependency on one particular server's local state.
+
+Stateful problem
+User → Server A
+          ↓
+     Local Session
+          ↓
+      User State
+
+If Server A goes down:
+
+User → Server B
+          ↓
+    ❌ Doesn't have
+    Server A's session
+
+This creates a limitation when scaling across multiple servers.
+
+Stateless solution
+              ┌→ Server A ─┐
+User → Load   ├→ Server B ─┼→ Shared Database
+      Balancer└→ Server C ─┘
+
+Now Server A, B, or C can retrieve the required data from the same shared storage.
+
+So:
+
+The purpose isn't simply "stateless uses a shared database." The important goal is to eliminate dependence on server-local session/state, making the system easier to scale and more resilient when individual servers fail.
+
+And one more important point: stateless doesn't necessarily require a shared database. For example, with JWT authentication, some state can be carried in the request itself.
+
+
+REQUEST LIFECYCLE HOOKS — COMPLETE SUMMARY
+1. What is a Request Lifecycle?
+
+The request lifecycle is the complete journey of an HTTP request from the client to the backend and the response back to the client.
+
+Client
+   ↓
+HTTP Request
+   ↓
+Middleware / Hooks
+   ↓
+View / Controller
+   ↓
+Business Logic
+   ↓
+Response
+   ↓
+Middleware / Hooks
+   ↓
+Client
+2. What is a Lifecycle Hook?
+
+A lifecycle hook is a specific point in the request/response lifecycle where we can execute custom code.
+
+Hooks allow us to perform common operations without putting that code directly inside every view/controller.
+
+3. Before Request Hook
+
+A before-request hook executes before the view/controller.
+
+Common uses:
+
+Authentication
+Authorization checks
+Custom header validation
+Request logging
+Starting an execution timer
+Request preprocessing
+Request
+   ↓
+Before Hook
+   ↓
+View / Controller
+
+For example:
+
+Request → Check Authentication → View
+
+If authentication fails, the request can be rejected before reaching the view.
+
+4. After Request Hook
+
+An after-request hook executes after the view/controller has generated a response.
+
+Common uses:
+
+Measuring execution latency
+Adding response headers
+Logging response status
+Modifying the response
+Adding rate-limit information
+View / Controller
+       ↓
+Response Created
+       ↓
+After Hook
+       ↓
+Client
+
+For example:
+
+View → Response → Calculate Latency → Add Header → Client
+5. Error / Teardown Hooks
+
+Error or teardown hooks execute when request processing encounters an error or finishes.
+
+They can be used for:
+
+Error logging
+Resource cleanup
+Database connection cleanup
+Monitoring failures
+Request
+   ↓
+View
+   ↓
+Error
+   ↓
+Error / Teardown Hook
+6. Middleware and Lifecycle Hooks
+
+Middleware can process the incoming request before the view and the outgoing response before it reaches the client.
+
+Client
+   ↓
+Request
+   ↓
+Middleware
+   ↓
+Before Hook
+   ↓
+View / Controller
+   ↓
+After Hook
+   ↓
+Middleware
+   ↓
+Response
+   ↓
+Client
+
+So middleware can act as a layer around the application's main logic.
+
+7. Why Use Lifecycle Hooks?
+
+Without hooks:
+
+View 1 → Authentication + Logging + Business Logic
+View 2 → Authentication + Logging + Business Logic
+View 3 → Authentication + Logging + Business Logic
+
+This causes duplicated code.
+
+With hooks:
+
+Before Hook → Authentication
+             ↓
+          All Views
+             ↓
+After Hook → Logging / Headers
+
+This keeps business logic separate from common infrastructure logic.
+
+8. Example From Our Today's Task
+
+Our request pipeline can look like:
+
+Incoming Request
+       ↓
+Before Hook
+       ↓
+Validate Custom Header
+       ↓
+Start Timer
+       ↓
+Middleware
+       ↓
+View / Controller
+       ↓
+After Hook
+       ↓
+Calculate Execution Time
+       ↓
+Add Rate-Limit Headers
+       ↓
+Middleware
+       ↓
+Response
+       ↓
+Client
+Key takeaway
+
+The request lifecycle describes the complete journey of a request, while lifecycle hooks are specific points in that journey where we can execute custom code before, after, or during error/cleanup processing.
+
+Topic 2 Status
+
+REQUEST LIFECYCLE HOOKS — ✅ COMPLETED
+
+
+TOPIC 3: CUSTOM MIDDLEWARE DESIGN
+
+Now we'll cover the final theoretical topic.
+
+1. What is Custom Middleware?
+
+Middleware is a layer of code that sits between the incoming HTTP request and your application's view/controller.
+
+It can inspect, modify, reject, or log requests and can also process responses before they are sent back to the client.
+
+Client
+   ↓
+HTTP Request
+   ↓
+Middleware
+   ↓
+View / Controller
+   ↓
+Business Logic
+   ↓
+Response
+   ↓
+Middleware
+   ↓
+Client
+2. Why Do We Need Middleware?
+
+Middleware is mainly used for cross-cutting concerns.
+
+These are tasks that apply to many endpoints instead of only one specific view.
+
+Examples:
+
+Authentication
+Authorization
+Request logging
+Header validation
+Rate limiting
+Execution-time measurement
+CORS
+Security headers
+
+Instead of writing the same code in every view:
+
+/products → authentication + logging + rate limiting
+/users    → authentication + logging + rate limiting
+/orders   → authentication + logging + rate limiting
+
+we put it in middleware:
+
+Request
+   ↓
+Middleware
+├── Authentication
+├── Logging
+├── Rate limiting
+├── Header validation
+└── Latency measurement
+   ↓
+View
+3. Request Middleware
+
+Middleware can inspect an incoming request before it reaches the view.
+
+For example:
+
+Request
+   ↓
+Middleware
+   ↓
+Check X-API-KEY
+   ↓
+Valid?
+ ┌─────┴─────┐
+Yes         No
+ ↓           ↓
+View       Reject
+
+This allows us to reject invalid requests early.
+
+4. Response Middleware
+
+Middleware can also process the response after the view has finished but before the response reaches the client.
+
+For example:
+
+View
+ ↓
+Response
+ ↓
+Middleware
+ ↓
+Add X-Execution-Time
+ ↓
+Add X-RateLimit-Remaining
+ ↓
+Client
+5. Custom Middleware
+
+Custom middleware means middleware that you create yourself according to your application's requirements.
+
+For today's task, our custom middleware will:
+
+Incoming request
+1. Receive request
+2. Validate custom header
+3. Start execution timer
+4. Log request information
+Application processing
+5. Allow request to reach view
+Outgoing response
+6. Calculate execution latency
+7. Add rate-limit headers
+8. Log response
+9. Send response to client
+6. Middleware Keeps Business Logic Clean
+
+This is one of the most important reasons we use middleware.
+
+Without middleware:
+
+View
+├── Validate API key
+├── Check rate limit
+├── Start timer
+├── Business logic
+├── Calculate latency
+├── Add headers
+└── Logging
+
+The view becomes cluttered.
+
+With middleware:
+
+Middleware
+├── Header validation
+├── Rate limiting
+├── Timing
+└── Logging
+       ↓
+View
+└── Business logic
+
+So the view can focus only on its actual job.
+
+7. Middleware Pipeline
+
+Multiple middleware components can be chained together.
+
+Client
+  ↓
+Logging Middleware
+  ↓
+Authentication Middleware
+  ↓
+Rate Limit Middleware
+  ↓
+Header Validation Middleware
+  ↓
+View / Controller
+  ↓
+Response
+  ↓
+Middleware chain
+  ↓
+Client
+
+Each middleware can perform its own responsibility.
+
+This is called a middleware pipeline.
+
+8. Today's Practical Task
+
+Our middleware will combine several concepts we've learned:
+
+             CUSTOM MIDDLEWARE
+                    │
+Incoming Request ───┤
+                    ↓
+            Validate Header
+                    ↓
+             Start Timer
+                    ↓
+              Rate Limit
+                    ↓
+             View / Controller
+                    ↓
+            Calculate Latency
+                    ↓
+            Add Response Headers
+                    ↓
+               Log Result
+                    ↓
+               HTTP Response
+Key takeaway
+
+Custom middleware is a reusable layer that intercepts and processes requests and responses, allowing cross-cutting concerns such as authentication, logging, rate limiting, header validation, and performance monitoring to remain separate from business logic.
+
+Today's Theory Status
+✅ Stateful vs. Stateless Backends
+✅ Request Lifecycle Hooks
+✅ Custom Middleware Design — COMPLETED
+
+So the entire theoretical portion is now complete. 🎯
+
+TODAY'S TASKS — PIPELINE & SUMMARY
+TASK 1 — CUSTOM MIDDLEWARE
+Pipeline
+Client
+   ↓
+HTTP Request
+   ↓
+before_request
+   ↓
+Validate X-API-KEY
+   ↓
+Start Execution Timer
+   ↓
+View / Controller
+   ↓
+after_request
+   ↓
+Calculate Execution Latency
+   ↓
+Add X-Execution-Time Header
+   ↓
+Log Request/Response
+   ↓
+HTTP Response
+   ↓
+Client
+Task 1 Summary
+Intercepted incoming HTTP requests.
+Validated the custom X-API-KEY header.
+Rejected missing/invalid API keys with 401 Unauthorized.
+Started a timer before the view executed.
+Calculated execution latency after the view.
+Added X-Execution-Time to the response.
+Logged request and response information.
+Kept this functionality outside the business logic.
+TASK 2 — RATE LIMITING & PAYLOAD LOGGING
+Pipeline
+Client
+   ↓
+HTTP Request
+   ↓
+Custom Middleware
+   ↓
+Validate X-API-KEY
+   ↓
+Identify Client IP
+   ↓
+Increment Request Counter
+   ↓
+Check Rate Limit
+   ↓
+Log Request Details
+   ↓
+Log JSON Payload
+   ↓
+Start Execution Timer
+   ↓
+View / Controller
+   ↓
+Calculate Execution Latency
+   ↓
+Add Rate-Limit Headers
+   ↓
+Add X-Execution-Time Header
+   ↓
+HTTP Response
+   ↓
+Client
+Task 2 Summary
+Implemented a 5-request rate limit per client IP.
+Tracked the number of requests from each client.
+Returned 429 Too Many Requests when the limit was exceeded.
+Added:
+X-RateLimit-Limit
+X-RateLimit-Remaining
+Logged incoming request information.
+Logged JSON payloads directly from middleware.
+Measured request execution time.
+Added X-Execution-Time to responses.
+Kept rate limiting and logging outside the views/controllers.
+🔥 Combined Architecture
+                         REQUEST
+                            ↓
+                     ┌─────────────┐
+                     │  Middleware │
+                     └──────┬──────┘
+                            ↓
+                  Validate X-API-KEY
+                            ↓
+                      Rate Limiting
+                            ↓
+                     Payload Logging
+                            ↓
+                       Start Timer
+                            ↓
+                    View / Controller
+                            ↓
+                       Business Logic
+                            ↓
+                     Calculate Latency
+                            ↓
+                   Add Response Headers
+                            ↓
+                     HTTP RESPONSE
+                            ↓
+                          Client
+Final Result
+
+Task 1: Request interception + header validation + latency monitoring ✅
+Task 2: Rate limiting + payload logging + response headers ✅
+
+Today's practical work: 100% COMPLETED. 🎯
