@@ -1,0 +1,165 @@
+Topic 1: Event Loop — Main Concept
+
+Event Loop ek mechanism hai jo asynchronous application mein multiple tasks ko manage karta hai.
+
+Simple words mein:
+
+Event Loop ek task ke I/O operation ka wait hone ke dauran doosre tasks ko execute karta hai.
+
+Example:
+
+Request A → Database ka wait ⏳
+                 ↓
+           Event Loop
+                 ↓
+Request B → Process
+                 ↓
+Request C → Process
+                 ↓
+Database response A → Request A continues
+Bas ye concept yaad rakho:
+
+Event Loop = Wait karte hue time ko waste nahi hone deta.
+
+Ye especially I/O-bound operations ke liye useful hai, jaise:
+
+Database requests
+API/network requests
+File I/O
+
+Topic 2: Async Database Drivers
+Main Concept
+
+Async Database Driver woh driver hota hai jo application ko database ke saath non-blocking/asynchronous communication karne deta hai.
+
+Example: asyncpg PostgreSQL ke liye ek asynchronous database driver hai.
+
+Simple flow:
+
+FastAPI
+   ↓
+Async Database Driver
+   ↓
+PostgreSQL
+
+Jab application database ko query bhejti hai aur response ka wait karti hai, async driver ki wajah se event loop doosre tasks handle kar sakta hai.
+
+Bas ye concept yaad rakho:
+
+Async database driver = database ke saath communication karte waqt event loop ko unnecessarily block nahi karta.
+
+Topic 3: Blocking Code
+Main Concept
+
+Blocking code woh code hota hai jo current thread ya event loop ko wait karne par majboor karta hai, jis dauran doosre tasks properly execute nahi ho pate.
+
+Example:
+
+time.sleep(5)
+
+Ye 5 seconds tak execution ko block karta hai.
+
+Async application mein agar aisa blocking code event loop ke andar chale, to poora event loop temporarily freeze ho sakta hai.
+
+Bas ye concept yaad rakho:
+
+Blocking code = doosre tasks ko aage process hone se rok deta hai jab tak blocking operation complete na ho.
+
+Topic 4: Thread Starvation
+Main Concept
+
+Thread starvation tab hoti hai jab available threads blocking ya long-running tasks mein busy ho jati hain, aur naye tasks/requests ke liye threads available nahi rehtin.
+
+Simple example:
+
+Thread 1 → Blocking task
+Thread 2 → Blocking task
+Thread 3 → Blocking task
+Thread 4 → Blocking task
+
+New Request → WAITING ⏳
+
+Yani resources occupied hone ki wajah se new work ko wait karna padta hai.
+
+Bas ye concept yaad rakho:
+
+Thread starvation = available threads busy ho jayein aur new tasks ko execute karne ke liye thread na mile.
+
+Topic 5: Non-Blocking Alternatives
+Main Concept
+
+Non-blocking alternatives aise methods hain jo async application mein operation ke wait ke dauran event loop ko block nahi karte.
+
+For example:
+
+❌ time.sleep()
+       ↓
+   Event Loop Blocked
+
+✅ asyncio.sleep()
+       ↓
+   Event Loop continues
+
+Isi tarah:
+
+❌ requests
+       ↓
+   Blocking HTTP
+
+✅ httpx (async)
+       ↓
+   Non-blocking HTTP
+Bas ye concept yaad rakho:
+
+Non-blocking alternative = aisa async method jo wait ke dauran event loop ko doosre tasks handle karne deta hai.
+
+Task 1 — Async Database Connection
+
+Goal: FastAPI gateway ko asynchronous database se connect karna.
+
+PostgreSQL install aur configure kiya.
+event_analytics database create kiya.
+SQLAlchemy ka async engine use kiya.
+PostgreSQL ke liye asyncpg async driver use kiya.
+AsyncSession aur async_sessionmaker configure kiya.
+
+await ke through asynchronous database query execute ki:
+
+SELECT 1
+Connection successfully verify hui:
+Database connection successful! ✅
+Password mein special characters ki wajah se connection issue ko quote_plus() se resolve kiya.
+engine.dispose() se connection resources properly close kiye.
+
+Main concept:
+
+Async database driver database ke I/O wait ke waqt event loop ko block nahi karta.
+
+Task 2 — Blocking vs Non-Blocking I/O
+
+Goal: Blocking code ke event loop par effect ko demonstrate karna aur non-blocking alternatives use karna.
+
+Blocking test
+time.sleep(5)
+Event loop ko block karta hai.
+Is duration mein doosre async tasks properly execute nahi ho sakte. ❌
+Non-blocking sleep
+await asyncio.sleep(5)
+Event loop ko block nahi karta.
+Waiting ke waqt doosre async tasks execute ho sakte hain. ✅
+Non-blocking HTTP
+await client.get(...)
+httpx.AsyncClient use kiya.
+HTTP request successfully complete hui.
+Result:
+status_code: 200
+time_taken: 3.66 seconds ✅
+
+Main concept:
+
+Non-blocking ka matlab request necessarily faster hona nahi; iska matlab hai I/O wait ke waqt event loop doosra kaam kar sakta hai.
+
+Overall
+
+Task 1: Async PostgreSQL connection → ✅ Complete
+Task 2: Blocking + non-blocking I/O demonstration → ✅ Complete
