@@ -394,3 +394,7 @@ Plaintext
 Database connected
 INFO:     127.0.0.1:xxxxx - "GET /users HTTP/1.1" 200 OK
 Database connection closed
+
+Task 3
+FastAPI dependency_overrides automated testing mein real dependencies, especially database dependencies, ko temporary mock dependencies se replace karne ka mechanism hai.
+
