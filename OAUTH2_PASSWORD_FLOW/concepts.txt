@@ -1,0 +1,324 @@
+OAuth (Open Authorization) is a secure way to allow third-party appslications to access user data without sharing passwords.
+
+why do we need OAuth:
+-> Prevent apps from storing passwords
+-> Limits what an app can do with your data
+-> Supports secure signal sign-on(SSO)
+
+Types of OAuth Token:-
+1. Access Token (Short-lived)
+2. Refresh Token (Long-Lived)
+
+
+1. OAUTH2 PASSWORD FLOW
+
+Concept: OAuth2 Password Flow mein user username aur password provide karta hai. Server credentials verify karke ek access token issue karta hai, jise protected API resources access karne ke liye use kiya jata hai.
+
+Example:
+
+Username + Password
+        ↓
+      /token
+        ↓
+   Access Token
+2. BEARER TOKEN INTEGRATION
+
+Concept: Bearer token ek access token hota hai jo client protected API request ke Authorization header mein Bearer scheme ke saath send karta hai. Server token ko verify karke request allow karta hai.
+
+Example:
+
+GET /profile
+Authorization: Bearer eyJhbGciOi...
+3. ROUTE-LEVEL SECURITY SCHEMES
+
+Concept: Route-level security mein har API endpoint ke liye specific security requirement define ki ja sakti hai. Isse different routes ko different permissions ya scopes diye ja sakte hain.
+
+Example:
+
+GET  /admin/users
+→ admin:read
+
+POST /admin/users
+→ admin:write
+4. CUSTOM OPENAPI SCHEMA GENERATION
+
+Concept: FastAPI automatically OpenAPI documentation generate karta hai, lekin hum is schema ko customize karke routes ki descriptions, response examples aur tags ko more informative bana sakte hain.
+
+Example:
+
+GET /admin/users
+
+Description:
+Retrieve all admin users.
+
+Response:
+{
+    "count": 2
+}
+
+1. OAUTH2 PASSWORD FLOW
+
+Real-world example: GitHub-type application
+
+Tum apne account mein username/password se login karte ho. Server credentials verify karta hai aur successful login ke baad application ko access token milta hai. Phir application us token ko use karke tumhare protected resources access karti hai.
+
+Simple analogy:
+Jaise university portal par login karne ke baad tumhein ek authenticated session milta hai, jisse tum apni attendance, grades waghera dekh sakte ho.
+
+2. BEARER TOKEN INTEGRATION
+
+Real-world example: Banking app API
+
+Tum banking application mein login kar chuke ho. Jab app tumhara account balance API se request karti hai, woh har baar password nahi bhejti. Instead, request ke saath access token bhejti hai:
+
+App
+ ↓
+Bearer Token
+ ↓
+Bank API
+ ↓
+Account Balance
+
+Jis system ke paas valid bearer token hai, woh us token ke allowed resources access kar sakta hai.
+
+3. ROUTE-LEVEL SECURITY SCHEMES
+
+Real-world example: Company Admin System
+
+Company ke admin panel mein different actions ke liye different permissions hoti hain:
+
+Employee List dekhna
+→ READ permission
+
+Employee create/delete karna
+→ WRITE/ADMIN permission
+
+Isliye:
+
+/admin/employees
+→ employee:read
+
+/admin/employees/create
+→ employee:write
+
+Yani user authenticated hone ke bawajood har route access nahi kar sakta.
+
+4. CUSTOM OPENAPI SCHEMA GENERATION
+
+Real-world example: Payment API
+
+Suppose ek company apni payment API developers ko provide karti hai. Sirf:
+
+POST /payment
+
+likhna enough nahi hai.
+
+Professional API documentation mein developers ko clearly dikhaya jata hai:
+
+POST /payment
+
+Description:
+Process a customer payment.
+
+Request:
+{
+    "amount": 5000,
+    "currency": "PKR"
+}
+
+Successful Response:
+{
+    "status": "success",
+    "transaction_id": "TX12345"
+}
+
+Ye information Swagger/OpenAPI documentation mein developers ko API samajhne aur correctly use karne mein help karti hai.
+
+Ek line mein yaad rakho:
+
+Password Flow → Login karke token lena
+Bearer Token → Token ke saath API access karna
+Route-Level Security → Har API route ki apni permission
+Custom OpenAPI → API ki professional documentation banana.
+
+
+1. OAUTH2 PASSWORD FLOW
+
+OAuth2 Password Flow ek authentication/authorization flow hai jisme user apni credentials provide karta hai aur successful verification ke baad access token receive karta hai. Ye token baad mein protected API endpoints ko access karne ke liye use hota hai.
+
+2. BEARER TOKEN INTEGRATION
+
+Bearer token integration mein client access token ko HTTP Authorization header mein Bearer scheme ke saath send karta hai. API token ko verify karke decide karti hai ke request ko access dena hai ya nahi.
+
+3. ROUTE-LEVEL SECURITY SCHEMES
+
+Route-level security ka matlab hai API ke individual endpoints par specific security requirements apply karna. Different routes different authentication ya scopes require kar sakte hain, jaise admin routes ke liye admin:read ya admin:write.
+
+4. CUSTOM OPENAPI SCHEMA GENERATION
+
+Custom OpenAPI schema generation mein FastAPI ki automatically generated API documentation ko customize kiya jata hai. Ismein route descriptions, response examples, tags/grouping aur security information ko improve ya modify kiya ja sakta hai, jo /docs aur /redoc mein show hota hai.
+
+TASK 1 — OAUTH2 + SCOPE-BASED ACCESS CONTROL SUMMARY
+1. OAuth2 Password Flow
+
+Implemented OAuth2 login using username/password. Valid credentials return an access token.
+
+Username: fahad
+Password: 12345
+        ↓
+Access Token
+2. Bearer Token Authentication
+
+API protected routes require the token through:
+
+Authorization: Bearer <token>
+
+FastAPI's OAuth2PasswordBearer handles token extraction.
+
+3. Scope-Based Authorization
+
+Defined two scopes:
+
+admin:read
+admin:write
+
+Different routes require different permissions:
+
+GET  /admin/users  → admin:read
+POST /admin/users  → admin:write
+4. Token & Scope Verification
+
+Created a token mapping containing users and their scopes.
+
+A read-only token has:
+
+admin:read
+
+while the full-access token has:
+
+admin:read
+admin:write
+5. Security Testing
+
+Successfully tested:
+
+Valid authentication → 200 OK ✅
+Invalid token → 401 Unauthorized ✅
+Missing required scope → 403 Forbidden ✅
+
+The 403 test produced:
+
+{
+  "detail": "Missing required scope: admin:write"
+}
+FINAL SUMMARY
+
+Task 1 successfully implemented OAuth2 Bearer Token Authentication with scope-based authorization, where administrative endpoints only allow users who possess the required permissions.
+
+TASK 2 — COMPLETE ✅
+
+You have successfully verified:
+
+✅ Custom OpenAPI title & description
+✅ Rich route descriptions
+✅ Custom response examples
+✅ Tag grouping
+✅ Swagger UI (/docs)
+✅ ReDoc (/redoc)
+✅ Three OAuth2 tokens/scopes
+✅ Administrative endpoint documentation
+✅ 200, 400, and 403 response documentation
+
+So your overall task is now fully completed:
+
+Task 1: OAuth2 Bearer + scope-based access control ✅
+Task 2: OpenAPI documentation customization ✅
+
+ok
+TASK 1 — OAuth2 Scope-Based Security ✅
+Implemented OAuth2 Bearer Token authentication.
+Added scope-based authorization.
+Protected administrative endpoints with required scopes.
+Tested multiple tokens with different permissions.
+
+Verified forbidden access with:
+
+{
+  "detail": "Missing required scope: admin:write"
+}
+TASK 2 — OpenAPI Documentation Customization ✅
+Created separate OpenApiDocumentation.py.
+Added custom API title, description, and version.
+Added rich route descriptions and summaries.
+Added custom response descriptions and JSON examples.
+Organized endpoints using OpenAPI tags.
+Tested Swagger UI at /docs.
+Tested ReDoc at /redoc.
+Verified the customized documentation and endpoint grouping.
+FINAL RESULT
+
+OAuth2 Security + Scope-Based Access Control + Customized OpenAPI Documentation — COMPLETED ✅
+
+We studied this topic because it combines two important real-world API development skills: security and documentation.
+
+1. OAuth2 + Scope-Based Security 🔐
+
+Purpose: control who can access what.
+
+For example, in a real company API:
+
+Normal user → can read their profile
+Admin with admin:read → can view administrative data
+Admin with admin:write → can create/update administrative data
+User without the required scope → gets 403 Forbidden
+
+So you learned how to move from simply saying "user is logged in" to "user is logged in AND has permission for this specific operation."
+
+2. OpenAPI Customization 📚
+
+Purpose: make your API understandable and usable by developers.
+
+FastAPI automatically generates /docs and /redoc, but real projects often need better documentation:
+
+What does this endpoint do?
+What permissions are required?
+What responses can occur?
+What does the JSON response look like?
+Which endpoints belong to administration?
+
+You learned how to provide that information using descriptions, tags, summaries, and response examples.
+
+The bigger picture
+
+Think of a production API like this:
+
+                 CLIENT
+                   │
+                   ▼
+            ┌──────────────┐
+            │  API Gateway │
+            └──────┬───────┘
+                   │
+          OAuth2 Bearer Token
+                   │
+                   ▼
+          ┌─────────────────┐
+          │ Scope Checking  │
+          │ admin:read      │
+          │ admin:write     │
+          └────────┬────────┘
+                   │
+             Permission OK
+                   │
+                   ▼
+             API Endpoint
+                   │
+                   ▼
+                Response
+
+       ┌─────────────────────────┐
+       │ /docs       /redoc      │
+       │ OpenAPI Documentation   │
+       └─────────────────────────┘
+
+In short: you studied this so you can build APIs that are secure, permission-aware, and professionally documented—which are core skills for backend/API development with FastAPI.
