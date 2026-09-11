@@ -1,0 +1,221 @@
+THEORETICAL FOCUS
+
+Is task ke 3 main theoretical concepts hain:
+
+Rate-Limiting Algorithms
+State Synchronization in Distributed Instances
+In-Memory Key-Value Storage Design
+1. RATE-LIMITING ALGORITHMS
+Main Concept
+
+Rate limiting ka matlab hai kisi client ko ek specific time period mein limited number of requests allow karna.
+
+Example:
+
+Limit = 100 requests
+Window = 1 minute
+
+Matlab ek client 1 minute mein maximum 100 requests kar sakta hai.
+
+Agar 101st request aaye:
+
+HTTP 429 Too Many Requests
+
+return hogi.
+
+Rate limiting kyun use hoti hai?
+API overload prevent karne ke liye
+Server resources protect karne ke liye
+Abuse/bot traffic control karne ke liye
+Fair usage maintain karne ke liye
+2. TOKEN BUCKET
+Main Concept
+
+Token Bucket mein har client ke liye ek virtual bucket hoti hai jisme tokens continuously add hote rehte hain.
+
+Example:
+
+Bucket Capacity = 5 tokens
+
+Har request:
+
+1 token consume
+
+Agar token available hai:
+
+Request → Allow
+
+Agar token nahi hai:
+
+Request → Reject (429)
+
+Tokens time ke saath refill hote hain.
+
+Simple Example
+Bucket = 5
+
+Request 1 → 4 tokens
+Request 2 → 3 tokens
+Request 3 → 2 tokens
+Request 4 → 1 token
+Request 5 → 0 tokens
+Request 6 → 429
+
+Phir time guzarta hai aur tokens dobara add hote hain.
+
+Key Idea
+
+Token Bucket controls requests based on available tokens and allows controlled bursts.
+
+3. SLIDING WINDOW COUNTER
+Main Concept
+
+Sliding Window recent time period ke andar hui requests ko track karta hai.
+
+Example:
+
+Limit = 5 requests
+Window = 60 seconds
+
+System current time se previous 60 seconds ki requests dekhega.
+
+Previous 60 seconds
+<-------------------->
+Request Request Request Request Request
+
+Agar 5 requests already hain:
+
+Next Request → 429
+
+Jaise hi purani request window se bahar nikalti hai, new request ke liye space available ho jati hai.
+
+Key Idea
+
+Sliding Window checks how many requests occurred within the most recent time window.
+
+4. TOKEN BUCKET VS SLIDING WINDOW
+Token Bucket	Sliding Window
+Tokens ko track karta hai	Requests ko track karta hai
+Tokens refill hote hain	Time window continuously move karti hai
+Bursts allow kar sakta hai	Recent request count control karta hai
+Bucket + refill rate	Time + request history
+More flexible traffic shaping	Request-frequency control ke liye straightforward
+
+Tumhare task mein Sliding Window implement karna hai.
+
+5. STATE SYNCHRONIZATION
+Main Concept
+
+Agar API ki multiple instances chal rahi hon:
+
+Client
+   ↓
+Load Balancer
+   ├── API Instance 1
+   ├── API Instance 2
+   └── API Instance 3
+
+to sab instances ko same rate-limit state pata honi chahiye.
+
+Problem agar har instance apni memory use kare:
+
+Instance 1 → 5 requests
+Instance 2 → 5 requests
+Instance 3 → 5 requests
+
+Har instance samjhega limit exceed nahi hui.
+
+Actually client ne:
+
+5 + 5 + 5 = 15 requests
+
+ki hain.
+
+Isliye shared state zaroori hai.
+
+Key Idea
+
+Distributed instances must share the same rate-limit state so the client cannot bypass the limit by reaching different servers.
+
+6. REDIS AS EXTERNAL STATE
+
+Yahan Redis ka role aata hai.
+
+Instead of:
+
+Instance 1 → Local Memory
+Instance 2 → Local Memory
+Instance 3 → Local Memory
+
+hum use karte hain:
+
+Instance 1 ─┐
+Instance 2 ─┼──→ Redis
+Instance 3 ─┘
+
+Ab sab instances same data access karengi.
+
+Key Idea
+
+Redis provides shared external state that can be accessed by multiple API instances.
+
+Isliye distributed rate limiter ke liye Redis useful hai.
+
+7. IN-MEMORY KEY-VALUE STORAGE
+Main Concept
+
+Key-value storage mein data is form mein hota hai:
+
+KEY → VALUE
+
+Example:
+
+user:101 → Fahad
+
+Rate limiter mein:
+
+rate_limit:client123 → request data
+
+Key client ko identify karti hai aur value us client ki rate-limit information contain karti hai.
+
+Redis isi type ka fast data storage provide karta hai.
+
+Key Idea
+
+A key uniquely identifies data, while the value stores the associated state.
+
+8. TEENO CONCEPTS KO CONNECT KARO
+
+Complete theoretical picture:
+
+             CLIENT
+                ↓
+        Rate Limiter
+                ↓
+       Sliding Window
+                ↓
+       Client Request State
+                ↓
+             Redis
+                ↓
+      Shared Across Instances
+
+Yani:
+
+Sliding Window decide karega:
+
+"Client ne allowed limit cross ki hai ya nahi?"
+
+Redis store karega:
+
+"Client ki current request state kya hai?"
+
+Distributed synchronization ensure karega:
+
+"Sab API instances ko same state nazar aaye."
+
+One-line overall concept:
+
+A distributed sliding-window rate limiter uses shared Redis state to track each client's recent requests consistently across multiple API instances and reject requests that exceed the configured limit.
+
+The purpose of RATE LIMITING AND DISTRIBUTED STATE is to control excessive API requests and maintain consistent rate limits across multiple server instances using shared state like Redis.
