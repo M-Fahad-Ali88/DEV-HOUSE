@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock Market Prices</title>
+</head>
+<body>
+    <h1>Stock Market</h1>
+
+    <table class="stock-data">
+        <thead>
+            <tr>
+                <th>Symbol</th> 
+                <th>Company</th>
+                <th>Price</th>
+                <th>Change</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr>
+                <td>AAPL</td>
+                <td>Apple Inc.</td>
+                <td>245.20</td>
+                <td>+1.25%</td>
+            </tr>
+
+            <tr>
+                <td>MSFT</td>
+                <td>Microsoft</td>
+                <td>510.30</td>
+                <td>-0.42%</td>
+            </tr>
+
+            <!-- Missing price -->
+            <tr>
+                <td>NVDA</td>
+                <td>NVIDIA</td>
+                <td></td>
+                <td>+2.10%</td>
+            </tr>
+
+            <!-- Missing columns -->
+            <tr>
+                <td>TSLA</td>
+                <td>Tesla</td>
+            </tr>
+
+            <!-- Nested data -->
+            <tr>
+                <td>
+                    <span class="symbol">AMZN</span>
+                </td>
+                <td>
+                    <div class="company">Amazon</div>
+                </td>
+                <td>
+                    <span class="price">230.15</span>
+                </td>
+                <td>
+                    <span class="change">+0.85%</span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

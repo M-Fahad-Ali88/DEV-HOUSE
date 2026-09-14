@@ -1,0 +1,738 @@
+Theoretical Focus
+
+Is task mein mainly 4 concepts samajhne hain:
+
+HTTP Request/Response Lifecycle
+CSS Selectors vs XPath
+Static DOM Parsing
+Ethical Web Scraping & robots.txt
+1. HTTP Request/Response Lifecycle
+
+Jab scraper kisi website ko access karta hai, sabse pehle HTTP request send hoti hai.
+
+Scraper
+   ↓
+HTTP Request
+   ↓
+Web Server
+   ↓
+HTTP Response
+   ↓
+HTML Document
+   ↓
+Parser
+   ↓
+Required Data
+
+Example:
+
+GET https://example.com/stocks
+
+Server response mein HTML bhej sakta hai:
+
+<table>
+    <tr>
+        <td>AAPL</td>
+        <td>245.20</td>
+    </tr>
+</table>
+
+Scraper ka kaam response se useful information extract karna hota hai.
+
+Important HTTP concepts
+
+Request:
+
+URL
+HTTP method
+Headers
+Optional parameters/body
+
+Response:
+
+Status code
+Headers
+Response body
+
+Common status codes:
+
+200 → Request successful
+301/302 → Redirect
+403 → Forbidden
+404 → Not Found
+429 → Too Many Requests
+500 → Server error
+
+Scraper ke liye status code important hai kyun ke parser ko HTML milne se pehle request successful honi chahiye.
+
+Jab scraper kisi website ko access karta hai, sabse pehle HTTP request send hoti hai.
+
+Scraper
+   ↓
+HTTP Request
+   ↓
+Web Server
+   ↓
+HTTP Response
+   ↓
+HTML Document
+   ↓
+Parser
+   ↓
+Required Data
+
+Example:
+
+GET https://example.com/stocks
+
+Server response mein HTML bhej sakta hai:
+
+<table>
+    <tr>
+        <td>AAPL</td>
+        <td>245.20</td>
+    </tr>
+</table>
+
+Scraper ka kaam response se useful information extract karna hota hai.
+
+Important HTTP concepts
+
+Request:
+
+URL
+HTTP method
+Headers
+Optional parameters/body
+
+Response:
+
+Status code
+Headers
+Response body
+
+Common status codes:
+
+200 → Request successful
+301/302 → Redirect
+403 → Forbidden
+404 → Not Found
+429 → Too Many Requests
+500 → Server error
+
+Scraper ke liye status code important hai kyun ke parser ko HTML milne se pehle request successful honi chahiye.
+
+Scraper
+   ↓
+HTTP Request
+   ↓
+Web Server
+   ↓
+HTTP Response
+   ↓
+HTML Document
+   ↓
+Parser
+   ↓
+Required Data
+1. Scraper
+
+Scraper hamara Python program hai jo website se automatically data lene ke liye banaya gaya hai.
+
+Example:
+
+import requests
+
+url = "https://example.com/stocks"
+
+Yahan Python program decide karta hai:
+
+"Mujhe is website se stock data chahiye."
+
+2. HTTP Request
+
+Scraper website ko ek request bhejta hai.
+
+Scraper
+   ↓
+"Website, mujhe tumhara page do."
+
+Technically:
+
+GET /stocks HTTP/1.1
+Host: example.com
+
+Python mein:
+
+response = requests.get(url)
+
+GET ka matlab basically hai:
+
+Server se resource/data maango.
+
+3. Web Server
+
+Request website ke web server tak jati hai.
+
+Python Scraper
+      ↓
+Internet
+      ↓
+Web Server
+
+Server request receive karta hai aur dekhta hai:
+
+"Is URL par kya resource available hai?"
+
+Server phir requested page prepare karta hai.
+
+4. HTTP Response
+
+Server scraper ko response bhejta hai.
+
+Web Server
+    ↓
+HTTP Response
+
+Response mein different cheezen ho sakti hain:
+
+Status Code
+Headers
+Body
+
+Example:
+
+HTTP/1.1 200 OK
+Content-Type: text/html
+
+200 OK ka matlab:
+
+Request successfully process ho gayi.
+
+5. HTML Document
+
+Response ka body HTML ho sakta hai.
+
+Example:
+
+<html>
+    <body>
+        <table>
+            <tr>
+                <td>AAPL</td>
+                <td>245.20</td>
+            </tr>
+        </table>
+    </body>
+</html>
+
+Ab scraper ke paas raw HTML aa gaya.
+
+Important distinction:
+
+HTTP Response
+     ↓
+Response Body
+     ↓
+HTML Document
+6. Parser
+
+Ab raw HTML ko directly read karna difficult hai.
+
+Isliye hum HTML parser use karte hain.
+
+Tumhare task mein:
+
+BeautifulSoup4
+
+from bs4 import BeautifulSoup
+
+soup = BeautifulSoup(response.text, "html.parser")
+
+BeautifulSoup HTML ko parse karke uska structure samajhne mein help karta hai.
+
+Example:
+
+HTML
+ │
+ └── table
+      │
+      └── tr
+           ├── td → AAPL
+           └── td → 245.20
+7. Required Data
+
+Ab parser ke through hum sirf woh information nikalte hain jo humein chahiye.
+
+row = soup.select_one("table tr")
+
+cells = row.select("td")
+
+symbol = cells[0].get_text(strip=True)
+price = cells[1].get_text(strip=True)
+
+Result:
+
+Symbol: AAPL
+Price: 245.20
+
+Yani required data mil gaya.
+
+Complete Flow
+
+Ab poora process:
+
+Scraper
+   │
+   │ "Mujhe stock page chahiye"
+   ▼
+HTTP Request
+   │
+   │ GET /stocks
+   ▼
+Web Server
+   │
+   │ Page process karta hai
+   ▼
+HTTP Response
+   │
+   │ 200 OK + HTML
+   ▼
+HTML Document
+   │
+   │ Raw HTML
+   ▼
+Parser (BeautifulSoup)
+   │
+   │ HTML structure samajhta hai
+   ▼
+Required Data
+   │
+   ├── Symbol → AAPL
+   └── Price  → 245.20
+Ek line mein yaad rakho:
+
+Scraper request bhejta hai → server response deta hai → response mein HTML milti hai → parser HTML ko samajhta hai → scraper required data extract karta hai.
+
+2. CSS Selectors vs XPath
+
+HTML ek tree structure hota hai:
+
+HTML
+ └── BODY
+      └── TABLE
+           └── TR
+                ├── TD
+                └── TD
+
+Humein kisi specific element ko locate karna hota hai.
+
+CSS Selector
+
+Example:
+
+table.stock-data
+
+Ya:
+
+table.stock-data tr
+
+Meaning:
+
+stock-data class wali table ke andar ke rows select karo.
+
+BeautifulSoup CSS selectors ko support karta hai:
+
+soup.select("table.stock-data tr")
+XPath
+
+XPath bhi HTML elements locate karne ke liye use hota hai.
+
+Example:
+
+//table[@class='stock-data']//tr
+
+Meaning:
+
+Aisi table find karo jiska class stock-data hai, phir uske andar ke tr elements find karo.
+
+Main Difference
+CSS Selector	XPath
+Simple aur readable	More powerful/complex
+BeautifulSoup mein directly supported	Usually lxml/Selenium etc.
+., #, > etc. use karta hai	/, //, @ etc. use karta hai
+Static HTML scraping mein convenient	Complex DOM navigation mein useful
+
+Is task mein hum BeautifulSoup + CSS selectors use karenge.
+
+3. Static DOM Parsing
+
+DOM = Document Object Model
+
+Browser HTML ko ek tree-like structure mein represent karta hai.
+
+Example:
+
+<table class="stock-data">
+    <tr>
+        <td>AAPL</td>
+        <td>245.20</td>
+    </tr>
+</table>
+
+Conceptually:
+
+TABLE
+ └── TR
+      ├── TD → AAPL
+      └── TD → 245.20
+
+BeautifulSoup HTML ko parse karke humein is structure ke elements access karne deta hai.
+
+For example:
+
+soup.select_one("table.stock-data")
+
+Table mil jayegi.
+
+Phir:
+
+table.select("tr")
+
+Rows mil jayengi.
+
+Phir:
+
+row.select("td")
+
+Cells mil jayengi.
+
+Static DOM ka matlab
+
+Static scraping mein hum woh HTML parse karte hain jo HTTP response mein already available ho.
+
+Server
+  ↓
+HTML
+  ↓
+BeautifulSoup
+  ↓
+Data
+
+Agar webpage JavaScript se baad mein data generate karta hai:
+
+Server
+  ↓
+Initial HTML
+  ↓
+JavaScript
+  ↓
+API Request
+  ↓
+Dynamic Data
+
+to simple BeautifulSoup ko woh dynamically generated data directly nahi mil sakta.
+
+Is task ka focus static DOM hai.
+
+4. Missing Nodes Handling
+
+Real-world HTML perfect nahi hota.
+
+Expected:
+
+<tr>
+    <td>AAPL</td>
+    <td>Apple</td>
+    <td>245.20</td>
+</tr>
+
+Lekin kabhi:
+
+<tr>
+    <td>AAPL</td>
+    <td>Apple</td>
+</tr>
+
+Price missing hai.
+
+Agar scraper assume kare:
+
+Column 1
+Column 2
+Column 3
+
+to error aa sakta hai.
+
+Isliye scraper ko defensive parsing karni chahiye:
+
+Element exists?
+      ↓
+    Yes → Extract
+      ↓
+     No → None / default
+
+Goal:
+
+Ek missing field ki wajah se entire scraper crash nahi hona chahiye.
+
+5. Malformed HTML
+
+Web pages hamesha perfectly written nahi hote.
+
+Example:
+
+<tr>
+    <td>AAPL
+    <td>245.20
+</tr>
+
+Yahan <td> properly close nahi kiya gaya.
+
+Parser ko malformed HTML ke saath bhi reasonable structure recover karna hota hai.
+
+BeautifulSoup isi liye useful hai:
+
+Raw HTML
+   ↓
+BeautifulSoup Parser
+   ↓
+Parsed DOM
+   ↓
+Elements
+   ↓
+Data
+6. Ethical Web Scraping
+
+Scraping ka matlab sirf:
+
+"Website se data automatically download karna"
+
+nahi hai.
+
+Responsible scraper ko website ke rules aur server resources ka respect karna chahiye.
+
+Main principles:
+
+robots.txt
+    +
+Rate Limiting
+    +
+Respectful User-Agent
+    +
+Terms of Service
+    +
+No unauthorized access
+7. robots.txt
+
+Websites commonly root level par ye file provide karti hain:
+
+/robots.txt
+
+Example:
+
+User-agent: *
+Disallow: /admin/
+Disallow: /private/
+Allow: /public/
+
+Iska basic purpose crawlers ko batana hai ke website ke kaunse areas crawling ke liye allowed/disallowed hain.
+
+Robots Flow
+
+Humara scraper:
+
+Target URL
+    ↓
+Find domain
+    ↓
+robots.txt
+    ↓
+Check crawling rules
+    ↓
+Allowed?
+   / \
+ Yes  No
+  ↓    ↓
+Request Stop
+
+Yani actual webpage request se pehle compliance check hoga.
+
+8. Rate Limiting
+
+Agar scraper continuously requests bhejta rahe:
+
+Request
+Request
+Request
+Request
+Request
+Request
+...
+
+to server par unnecessary load aa sakta hai.
+
+Responsible scraper:
+
+Request
+   ↓
+Wait
+   ↓
+Request
+   ↓
+Wait
+   ↓
+Request
+
+Isay rate limiting kehte hain.
+
+Agar server 429 Too Many Requests return kare, scraper ko requests slow/down ya temporarily stop karni chahiye.
+
+9. Overall Concept
+
+Is poore topic ko ek pipeline ke form mein yaad rakho:
+
+             WEB SCRAPER
+                  │
+                  ▼
+        ┌──────────────────┐
+        │ HTTP Request     │
+        └────────┬─────────┘
+                 │
+                 ▼
+        ┌──────────────────┐
+        │ HTTP Response    │
+        └────────┬─────────┘
+                 │
+                 ▼
+        ┌──────────────────┐
+        │ Static HTML/DOM  │
+        └────────┬─────────┘
+                 │
+                 ▼
+        ┌──────────────────┐
+        │ BeautifulSoup    │
+        │ + CSS Selectors  │
+        └────────┬─────────┘
+                 │
+                 ▼
+        ┌──────────────────┐
+        │ Structured Data  │
+        └──────────────────┘
+
+Aur compliance layer request se pehle:
+
+              Target URL
+                  ↓
+             robots.txt
+                  ↓
+          Crawling Allowed?
+             ↙       ↘
+           YES        NO
+            ↓          ↓
+       HTTP Request    STOP
+🎯 Main takeaway
+
+Is topic ka core concept hai:
+
+“Website se data extract karne se pehle HTTP lifecycle samjho, static DOM ko selectors se parse karo, missing/malformed HTML ko safely handle karo, aur request bhejne se pehle crawling rules + rate limits respect karo.”
+
+Today's Summary — Static Web Scraping & Robots Compliance
+1. Theoretical Tasks
+Topic	Purpose
+HTTP Request/Response Lifecycle	Samajhna ke scraper request kaise send karta hai aur server se HTML response kaise receive karta hai.
+CSS Selectors vs XPath	HTML elements ko accurately locate karna. Humne BeautifulSoup ke saath CSS selectors use kiye.
+Static DOM Parsing	Server se already available HTML ko BeautifulSoup se parse karke data extract karna.
+Missing/Malformed Nodes	Missing cells/nodes ki wajah se scraper crash na ho; missing values ko None handle karna.
+Ethical Web Scraping	robots.txt, rate limits, User-Agent aur website rules ko respect karna.
+2. Daily Tasks
+Task 1 — Static HTML Parser ✅
+
+Built a BeautifulSoup4 parser that:
+
+Extracts stock table data
+Handles nested elements
+Handles missing cells
+Handles incomplete/malformed table structures
+Returns structured dictionaries
+
+Example:
+
+AAPL → complete data
+NVDA → missing price → None
+TSLA → missing columns → None
+AMZN → nested HTML → correctly extracted
+Task 2 — Pre-Scraping Compliance ✅
+
+Built a RobotsChecker that:
+
+Target URL
+    ↓
+robots.txt
+    ↓
+Parse rules
+    ↓
+Allowed / Not Allowed
+    ↓
+Only then → downstream request
+Task 3 — Rate Limiting ✅
+
+Built a RateLimiter to maintain a delay between requests and avoid sending requests too quickly.
+
+Task 4 — HTTP 429 Handling ✅
+
+Added handling for:
+
+429 Too Many Requests
+
+The scraper checks the Retry-After header when available instead of blindly retrying.
+
+3. Scraper Milestone ✅
+
+Initialize the Distributed Financial Engine repository, setting up static DOM extractors for stock market pricing pages.
+
+Milestone completed through the static stock-price extraction architecture.
+
+4. Purpose of All Files
+File	Purpose
+Main.py	Main entry point. Runs the static parser, robots compliance check, rate limiter test, and coordinates the components.
+Requirements.txt	Contains required dependencies: beautifulsoup4 and requests.
+COMPLIANCE/RobotsChecker.py	Fetches and parses robots.txt and checks whether a URL can be crawled.
+COMPLIANCE/RateLimiter.py	Controls the delay between HTTP requests to respect server rate limits.
+EXTRACTORS/StockTableExtractor.py	Uses BeautifulSoup and CSS selectors to extract stock data from HTML tables.
+TEST_DATA/StockPage.html	Local static stock-market page used to test the extractor with normal, missing, and nested data.
+Final Architecture
+STATIC_WEB_SCRAPING_AND_ROBOTS_COMPLIANCE
+│
+├── COMPLIANCE
+│   ├── RobotsChecker.py
+│   └── RateLimiter.py
+│
+├── EXTRACTORS
+│   └── StockTableExtractor.py
+│
+├── TEST_DATA
+│   └── StockPage.html
+│
+├── Main.py
+└── Requirements.txt
+Overall Concept
+Target URL
+     ↓
+robots.txt Check
+     ↓
+Crawling Allowed?
+     ↓
+Rate Limiter
+     ↓
+HTTP Request
+     ↓
+HTML Response
+     ↓
+BeautifulSoup
+     ↓
+CSS Selector
+     ↓
+Stock Data
+
+Today's work: COMPLETED ✅ — Daily Tasks + Scraper Milestone.
