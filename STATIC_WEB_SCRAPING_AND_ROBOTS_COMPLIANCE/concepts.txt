@@ -736,3 +736,5 @@ CSS Selector
 Stock Data
 
 Today's work: COMPLETED ✅ — Daily Tasks + Scraper Milestone.
+
+The main purpose of today’s task was to learn how to build a safe, ethical, and reliable web-scraping foundation for the Distributed Financial Engine by understanding HTTP requests, parsing static HTML with BeautifulSoup and CSS selectors, handling missing or nested data, checking robots.txt before making requests, respecting rate limits, and handling 429 responses, while setting up the initial stock-market DOM extractor that can later be connected to real financial data sources.
