@@ -1,0 +1,772 @@
+Theoretical Focus:
+
+1. Client-Side JavaScript Execution
+
+Modern websites mein aksar sara data initial HTML response mein nahi hota. Iske bajaye JavaScript browser ke andar execute hoti hai, APIs ke saath communicate karti hai, received data ko process karti hai, aur webpage ko update karti hai.
+
+Playwright humein ek real browser ko control karne deta hai, jiski wajah se website ki JavaScript normally execute hoti hai.
+
+2. Dynamic DOM Mutations
+
+JavaScript page load hone ke baad bhi DOM ko continuously modify kar sakti hai. Ismein elements ko add karna, remove karna, ya existing elements ko change karna shamil hai.
+
+Ismein:
+
+dynamically generated content
+infinite scrolling
+JavaScript-rendered tables
+
+shamil hain.
+
+Playwright updated DOM ke saath interact kar sakta hai jab JavaScript usmein changes kar chuki ho.
+
+3. Shadow DOM
+
+Modern web applications aksar Web Components use karti hain jinmein Shadow DOM hota hai. Shadow DOM component ke internal structure ko normal document structure se separate rakhta hai.
+
+Traditional scraping techniques ko Shadow DOM ke elements access karne mein difficulty ho sakti hai. Playwright browser-level locators provide karta hai jinki madad se in components ke saath interact kiya ja sakta hai.
+
+4. Network Traffic Interception
+
+Dynamic webpages aksar apna data XHR, Fetch aur WebSocket connections ke through receive karti hain.
+
+Rendered HTML se sirf data extract karne ke bajaye, Playwright browser ki network activity ko monitor karke underlying responses ya messages ko capture kar sakta hai.
+
+Iska matlab hai ke hum data ko us stage par capture kar sakte hain jab website usay browser mein render karne se pehle network se receive karti hai.
+
+5. Browser Automation with Playwright
+
+Playwright Chromium, Firefox aur WebKit ko automatically control kar sakta hai.
+
+Iski madad se hum:
+
+webpage navigation
+scrolling
+clicking
+dynamic content ka wait
+web components ke saath interaction
+network traffic monitoring
+
+jaise tasks perform kar sakte hain.
+
+Overall Concept
+
+Ye topic static HTML scraping se modern JavaScript-driven applications ki scraping ki taraf move karta hai.
+
+Ismein humein do cheezon ko samajhna important hai:
+
+Browser ke andar JavaScript ki wajah se change hone wala DOM aur website ke backend ke saath hone wali underlying network communication.
+
+
+Playwright ek browser automation framework/library hai jo programmatically web browsers ko control karne ke liye use hota hai.
+
+Simple words mein:
+
+Playwright ke through hum Python code se browser ko control kar sakte hain, bilkul aise jaise koi real user browser use kar raha ho.
+
+Example
+
+Agar manually hum:
+
+Chrome open
+   ↓
+Website open
+   ↓
+Button click
+   ↓
+Scroll
+   ↓
+Data load
+   ↓
+Data read
+
+karte hain, to Playwright mein ye kaam code automatically kar sakta hai:
+
+Python
+  ↓
+Playwright
+  ↓
+Browser
+  ↓
+Website
+  ↓
+Click / Scroll / Data Extraction
+Playwright se kya kar sakte hain?
+Website open karna
+Buttons click karna
+Forms fill karna
+Pages par scroll karna
+JavaScript execute hone dena
+Dynamic content extract karna
+Screenshots lena
+Login flows automate karna
+API/XHR/Fetch traffic monitor karna
+WebSocket messages observe karna
+Headless browser mein scraping karna
+Tumhare current topic mein
+
+Tum Playwright ko mainly dynamic websites scraping ke liye use kar rahe ho.
+
+For example:
+
+Website
+   ↓
+JavaScript execute
+   ↓
+API se data
+   ↓
+DOM update
+   ↓
+Playwright
+   ↓
+Data extract
+
+Important difference:
+
+requests + BeautifulSoup → mainly HTML ko fetch aur parse karte hain.
+
+Playwright → browser ko automate karta hai, isliye JavaScript-driven websites aur dynamically loaded content ko handle kar sakta hai.
+
+Task 1 ka main purpose ye hai ke hum Playwright ko use karke ek dynamic website ko browser ki tarah automate karein.
+
+Normal static scraping mein hum HTML download karke data nikalte hain. Lekin modern websites mein JavaScript page ko load hone ke baad change karti rehti hai. Is task mein humne isi situation ko handle kiya.
+
+1. Playwright Browser Automation
+
+Humne:
+
+browser = await p.chromium.launch(headless=True)
+
+use karke Chromium browser launch kiya.
+
+headless=True ka matlab hai browser background mein run hota hai, screen par browser window nahi dikhti.
+
+Phir:
+
+page = await browser.new_page()
+
+se ek new browser page banaya.
+
+Aur:
+
+await page.goto(...)
+
+se website open ki.
+
+2. JavaScript-Driven Website
+
+Humne ye website use ki:
+
+https://quotes.toscrape.com/js/
+
+Is website ka purpose JavaScript-rendered content ko demonstrate karna hai.
+
+Browser page load karta hai, JavaScript execute hoti hai aur phir quotes DOM mein available hote hain.
+
+Isi liye Playwright yahan useful hai.
+
+3. Dynamic Scrolling
+
+Humne page ki height check ki:
+
+current_height = await page.evaluate(
+    "document.body.scrollHeight"
+)
+
+Yahan page.evaluate() browser ke andar JavaScript execute karta hai.
+
+Phir:
+
+window.scrollTo(0, document.body.scrollHeight)
+
+page ko bottom tak scroll karta hai.
+
+Concept:
+
+Current Page Height
+        ↓
+Scroll to Bottom
+        ↓
+JavaScript / Page Content
+        ↓
+DOM Update
+        ↓
+New Page Height
+
+Humne ye process multiple times repeat kiya.
+
+4. JavaScript-Rendered Data Extract Karna
+
+Quotes ke liye:
+
+quotes = page.locator(".quote")
+
+humne .quote elements locate kiye.
+
+Phir:
+
+count = await quotes.count()
+
+se total quotes count kiye.
+
+Tumhare output mein:
+
+Quotes Found: 10
+
+aaya.
+
+Phir har quote se:
+
+text = await quote.locator(".text").inner_text()
+author = await quote.locator(".author").inner_text()
+
+text aur author extract kiya.
+
+Yani humne browser ke final rendered DOM se data nikala.
+
+5. Shadow DOM
+
+Task ka doosra important part Shadow DOM tha.
+
+Humne ek custom web component banaya:
+
+<custom-card></custom-card>
+
+Us component ke andar Shadow DOM create hua:
+
+const shadow = this.attachShadow({
+    mode: "open"
+});
+
+Aur uske andar:
+
+<h2>Shadow DOM Content</h2>
+<button>Load Data</button>
+
+rakha gaya.
+
+Playwright ne is content ko locate kiya:
+
+page.locator("custom-card").locator("h2")
+
+Aur output:
+
+Shadow DOM: Shadow DOM Content
+
+aaya.
+
+Iska matlab hum successfully Shadow DOM ke andar ka content access kar paye.
+
+6. Shadow DOM Interaction
+
+Sirf data read nahi kiya, balki button par click bhi kiya:
+
+button = page.locator(
+    "custom-card"
+).get_by_role("button", name="Load Data")
+
+await button.click()
+
+Output:
+
+Shadow DOM button clicked.
+
+Iska matlab Playwright sirf scraping ke liye nahi, balki real browser interaction ke liye bhi use hota hai.
+
+Task 1 ka Overall Flow
+Playwright
+    ↓
+Chromium Browser
+    ↓
+Dynamic Website
+    ↓
+JavaScript Execute
+    ↓
+DOM Update
+    ↓
+Scroll / Dynamic Content
+    ↓
+Extract Data
+    ↓
+Access Shadow DOM
+    ↓
+Interact with Elements
+Ek line mein Task 1
+
+Task 1 mein humne Playwright ke through ek JavaScript-based dynamic webpage ko automate kiya, dynamically loaded content ko handle kiya, rendered data extract kiya, aur Shadow DOM ke elements ke saath interact kiya.
+
+Task 2 — Network Traffic Interception
+
+Task 2 ka main idea yeh hai ke modern website par data sirf HTML mein nahi hota. JavaScript background mein server se data mangwati hai.
+
+Playwright ki help se hum browser ke andar hone wali network communication ko directly observe/intercept kar sakte hain.
+
+Is Task 2 ke do parts hain:
+
+XHR / Fetch Interception
+WebSocket Interception
+Part 1 — XHR / Fetch Interception
+Basic concept
+
+Jab webpage JavaScript ke through server/API se data request karti hai, commonly:
+
+Browser
+   ↓
+JavaScript
+   ↓
+Fetch / XHR Request
+   ↓
+Server / API
+   ↓
+JSON Response
+   ↓
+JavaScript
+   ↓
+DOM
+
+For example, webpage JavaScript ye request kar sakti hai:
+
+fetch("/api/products")
+
+Server response deta hai:
+
+{
+    "products": [
+        {
+            "id": 1,
+            "name": "Laptop",
+            "price": 120000
+        }
+    ]
+}
+
+Normally browser is JSON ko receive karta hai aur JavaScript usko webpage ke HTML/DOM mein display kar deti hai.
+
+Humne kya kiya?
+
+Playwright ne browser ki response event ko listen kiya:
+
+page.on("response", handle_response)
+
+Iska matlab:
+
+"Jab browser ko koi response mile, mujhe batao."
+
+Phir humne response ka URL aur status dekha:
+
+print(response.url)
+print(response.status)
+
+Aur JSON response ko directly read kiya:
+
+data = await response.json()
+
+Is tarah hum DOM se data scrape karne ke bajaye API response se directly data obtain kar sakte hain.
+
+Hamare example mein
+
+JavaScript:
+
+fetch("/api/products")
+
+ne API request bheji.
+
+Playwright ne us response ko intercept kiya:
+
+API Response Detected
+URL: http://demo.local/api/products
+Status: 200
+
+Phir raw payload mila:
+
+{
+    "products": [
+        {
+            "id": 1,
+            "name": "Laptop",
+            "price": 120000
+        },
+        {
+            "id": 2,
+            "name": "Keyboard",
+            "price": 5000
+        },
+        {
+            "id": 3,
+            "name": "Mouse",
+            "price": 2500
+        }
+    ]
+}
+
+Uske baad JavaScript ne isi data ko DOM mein render kiya:
+
+Laptop - 120000
+Keyboard - 5000
+Mouse - 2500
+
+Yahan important point:
+
+Humne data ko DOM mein render hone se pehle network response se dekh liya.
+
+Conceptually:
+
+              ┌──→ Playwright intercepts
+              │
+JavaScript → Fetch → API → JSON
+                         │
+                         ↓
+                    JavaScript
+                         │
+                         ↓
+                        DOM
+
+Isliye Task 2 Part 1 ka focus hai:
+
+API se aane wale raw HTTP response ko browser network level par capture karna.
+
+Part 2 — WebSocket Interception
+
+WebSocket thoda different hai.
+
+Fetch/XHR usually:
+
+Request → Response
+
+hota hai.
+
+WebSocket ek persistent connection establish karta hai:
+
+Browser ←→ WebSocket Server
+
+Connection continuously open reh sakta hai aur dono sides messages send/receive kar sakti hain.
+
+For example:
+
+Browser
+   │
+   │ WebSocket connection
+   │
+   ▼
+Server
+
+Connection establish hone ke baad:
+
+Browser ───────→ Server
+       Message 1
+
+Browser ←─────── Server
+       Message 2
+
+Browser ───────→ Server
+       Message 3
+
+Browser ←─────── Server
+       Message 4
+
+Ye real-time applications mein useful hota hai, jaise:
+
+live chat
+real-time notifications
+live dashboards
+multiplayer games
+live updates
+Playwright WebSocket ko kaise intercept karta hai?
+
+Playwright mein humne use kiya:
+
+page.on("websocket", handle_websocket)
+
+Iska matlab:
+
+"Jab page koi WebSocket connection create kare, mujhe notify karo."
+
+Phir:
+
+ws.on("framesent", ...)
+
+se hum browser se server ko bheje jaane wale messages capture karte hain.
+
+Aur:
+
+ws.on("framereceived", ...)
+
+se server se browser ko aane wale messages capture karte hain.
+
+Hamare example mein
+
+Browser ne connection establish kiya:
+
+WebSocket Connected
+URL: ws://127.0.0.1:8765/
+
+Phir browser ne ye JSON send kiya:
+
+{
+    "type": "message",
+    "user": "Fahad",
+    "text": "Hello WebSocket"
+}
+
+Playwright ne ise capture kiya:
+
+Sent: {"type":"message","user":"Fahad","text":"Hello WebSocket"}
+
+Server ne message receive kiya:
+
+Server Received:
+{"type":"message","user":"Fahad","text":"Hello WebSocket"}
+
+Server ne response bheja.
+
+Playwright ne received frame capture kiya:
+
+Received:
+{
+    "status": "success",
+    "message": "WebSocket payload received",
+    "data": ...
+}
+
+So complete flow:
+
+Browser
+   │
+   │ Sent frame
+   ▼
+WebSocket Server
+   │
+   │ Received frame
+   │
+   │ Response
+   ▼
+Browser
+   │
+   ▼
+Playwright intercepts
+Part 1 vs Part 2 — Main Difference
+
+Sabse important difference ye hai:
+
+XHR / Fetch
+Request
+   ↓
+Response
+   ↓
+Done
+
+Ye generally individual HTTP requests ke liye hota hai.
+
+WebSocket
+Connection
+   ↕
+Continuous messages
+   ↕
+Connection remains open
+
+Isliye WebSocket mein hum frames/messages monitor karte hain, jabke Fetch/XHR mein hum HTTP responses monitor karte hain.
+
+Ek simple real-world example
+
+Suppose ek website par live stock price hai.
+
+Agar website:
+
+Fetch API
+
+use karti hai:
+
+Browser → GET /api/stock → Server
+Browser ← JSON price ← Server
+
+Hum Fetch response intercept karenge.
+
+Lekin agar website continuously price updates WebSocket se bhejti hai:
+
+Browser ←→ WebSocket Server
+
+$245.20
+$245.35
+$245.18
+$245.42
+...
+
+to hum WebSocket frames intercept karenge.
+
+Task 2 ka core concept
+
+Task 2 mein humne webpage ke final HTML/DOM ko scrape karne ke bajaye data ke source/network layer ko observe karna seekha.
+
+Traditional scraping:
+
+Website
+   ↓
+DOM
+   ↓
+Scraper
+   ↓
+Data
+
+
+Task 2:
+
+Website
+   ↓
+Network/API
+   ↓
+Playwright Interception
+   ↓
+Raw Data
+
+Yahi Task 2 ka sabse important concept hai.
+
+
+Task 1 — Dynamic SPA Automation
+
+File: Main.py
+
+Is task mein humne modern JavaScript-driven websites ko browser level par automate karna seekha.
+
+Concepts covered:
+Client-side JavaScript execution
+Dynamic DOM mutations
+Infinite scrolling
+JavaScript-rendered content
+Shadow DOM
+Browser automation with Playwright
+Practical work
+
+Playwright ne Chromium launch kiya aur webpage open ki:
+
+Playwright
+    ↓
+Chromium
+    ↓
+JavaScript executes
+    ↓
+Dynamic content loads
+    ↓
+Playwright extracts data
+
+Humne page ko automatically scroll kiya aur dynamically available quotes extract kiye.
+
+Output mein 10 quotes successfully extract hue.
+
+Phir Shadow DOM ka demo create karke:
+
+Shadow DOM Content
+Shadow DOM button clicked.
+
+successfully access aur interact kiya.
+
+Task 1 Result
+Dynamic Content      ✅
+Infinite Scroll      ✅
+JavaScript Rendering ✅
+Shadow DOM           ✅
+Browser Automation   ✅
+Data Extraction      ✅
+Task 2 — Network Traffic Interception
+
+Task 2 mein humne DOM ke bajaye underlying network communication ko intercept karna seekha.
+
+Iske 2 parts the.
+
+Part 1 — XHR / Fetch Interception
+
+File: NetworkInterceptor.py
+
+Humne JavaScript fetch() request create ki:
+
+JavaScript
+    ↓
+Fetch /api/products
+    ↓
+API
+    ↓
+JSON Response
+
+Playwright ne response intercept kiya:
+
+API Response Detected
+Status: 200
+
+Aur raw JSON payload directly capture kiya:
+
+{
+    "products": [
+        {"name": "Laptop", "price": 120000},
+        {"name": "Keyboard", "price": 5000},
+        {"name": "Mouse", "price": 2500}
+    ]
+}
+
+Phir wahi data DOM mein render bhi hua.
+
+Main concept:
+
+Data ko DOM se scrape karne ke bajaye API response se directly capture karna.
+
+Part 2 — WebSocket Interception
+
+File: WebSocketInterceptor.py
+
+Humne local WebSocket server create kiya aur Playwright browser ko usse connect karwaya.
+
+Flow:
+
+Browser
+   ↓
+WebSocket Connection
+   ↓
+Send JSON
+   ↓
+Server
+   ↓
+Response
+   ↓
+Playwright captures it
+
+Successfully capture hua:
+
+WebSocket Connected
+URL: ws://127.0.0.1:8765/
+
+Sent: {"type":"message","user":"Fahad","text":"Hello WebSocket"}
+
+Server Received: ...
+
+Received: {"status": "success", ...}
+
+Isse humne sent aur received WebSocket frames dono intercept kiye.
+
+🧠 Aaj Ka Overall Concept
+
+Aaj humne static scraping se aage jaakar modern dynamic websites ko understand kiya:
+
+                 PLAYWRIGHT
+                      │
+        ┌─────────────┴─────────────┐
+        │                           │
+      TASK 1                     TASK 2
+        │                           │
+ Browser Automation          Network Interception
+        │                           │
+ ┌──────┼──────┐             ┌──────┴──────┐
+ │      │      │             │             │
+ JS   Scroll Shadow        Fetch        WebSocket
+ │      │      │             │             │
+ DOM  Dynamic DOM          JSON        Frames
+Final Status
+Task	Work	Status
+Task 1	Dynamic SPA automation	✅
+Task 1	Infinite scrolling	✅
+Task 1	Shadow DOM	✅
+Task 1	JS-rendered data	✅
+Task 2.1	XHR/Fetch interception	✅
+Task 2.1	Raw JSON extraction	✅
+Task 2.2	WebSocket interception	✅
+Task 2.2	Sent frames	✅
+Task 2.2	Received frames	✅
+
+Aaj ka Playwright topic completely complete hai. ✅
