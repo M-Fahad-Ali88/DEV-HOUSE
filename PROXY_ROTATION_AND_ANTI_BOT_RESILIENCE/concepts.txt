@@ -1,0 +1,1152 @@
+1. Theoretical Focus
+
+Is task mein hum ye samajh rahe hain ke websites automated bots ko kaise identify aur control karti hain, aur scraper apni requests ko properly manage kaise kar sakta hai.
+
+Browser Fingerprinting
+
+Browser fingerprinting ka matlab hai website browser ke different characteristics ko dekh kar uski unique identity/profile banana.
+
+For example:
+
+User-Agent
+Accept-Language
+Screen/browser information
+Browser capabilities
+Kuch network-level characteristics
+
+Agar har request bilkul same pattern follow kare, website ko automation ka indication mil sakta hai.
+
+TLS / JA3 Signature
+
+Jab browser/server ke darmiyan HTTPS connection establish hota hai to TLS handshake hota hai.
+
+JA3 ek technique hai jo TLS handshake ki kuch characteristics se client fingerprint create karti hai.
+
+Simple words mein:
+
+Browser / Client
+       ↓
+   TLS Handshake
+       ↓
+JA3 Fingerprint
+       ↓
+Server ko client ka pattern pata chal sakta hai
+
+Yani sirf User-Agent change karna hamesha enough nahi hota; network-level characteristics bhi identify ki ja sakti hain.
+
+IP Blocking
+
+Agar ek IP address se bohat zyada requests aayen ya server ko suspicious traffic mile, server us IP ko:
+
+temporarily block
+rate-limit
+ya permanently restrict
+
+kar sakta hai.
+
+Example:
+
+IP → 192.168.x.x
+      ↓
+1000 requests
+      ↓
+Server detects excessive traffic
+      ↓
+429 Too Many Requests
+      ↓
+IP temporarily restricted
+User-Agent Pooling
+
+Normally agar scraper har request mein same User-Agent use kare:
+
+Request 1 → Chrome UA
+Request 2 → Chrome UA
+Request 3 → Chrome UA
+Request 4 → Chrome UA
+
+to pattern consistent rehta hai.
+
+User-Agent pool mein multiple predefined User-Agents maintain kiye ja sakte hain:
+
+user_agents = [
+    "Mozilla/5.0 ...",
+    "Mozilla/5.0 ...",
+    "Mozilla/5.0 ..."
+]
+
+Middleware request ke liye pool se appropriate User-Agent select karta hai.
+
+Distributed Proxy Rotation
+
+Proxy ka basic concept:
+
+Scraper
+   ↓
+Proxy
+   ↓
+Website
+
+Agar multiple proxies available hon:
+
+             ┌── Proxy A
+             │
+Scraper ─────┼── Proxy B
+             │
+             ├── Proxy C
+             │
+             └── Proxy D
+
+to requests ko available endpoints ke through distribute kiya ja sakta hai.
+
+TLS Handshake simple words mein woh process hai jisme browser aur server HTTPS connection start karne se pehle ek secure connection establish karte hain.
+
+Example:
+
+Tumhara Browser
+       ↓
+   "Hello Server!"
+       ↓
+     Server
+       ↓
+"Hello Browser!"
+       ↓
+Security information exchange
+       ↓
+Encryption keys establish
+       ↓
+🔒 Secure HTTPS Connection
+Simple example
+
+Jab tum browser mein:
+
+https://example.com
+
+open karte ho, browser ko server ke saath encrypted communication establish karni hoti hai.
+
+TLS handshake roughly ye kaam karta hai:
+
+Client Hello → Browser server ko batata hai ke woh TLS connection establish karna chahta hai.
+Server Hello → Server suitable security settings select karta hai.
+Certificate → Server apni identity prove karne ke liye TLS certificate provide karta hai.
+Key Exchange → Browser aur server secure encryption keys establish karte hain.
+Secure Communication → Ab actual data encrypted form mein exchange hota hai.
+JA3 se connection
+
+Tumhare current task mein JA3 isi process se related hai.
+
+TLS handshake mein client kuch specific characteristics/features present karta hai. In characteristics ko use karke ek TLS fingerprint banaya ja sakta hai, jise JA3 fingerprint kaha jata hai.
+
+Browser
+   ↓
+TLS Handshake
+   ↓
+TLS Characteristics
+   ↓
+JA3 Fingerprint
+   ↓
+Server
+
+Isliye sirf User-Agent change karne se client ka complete network identity pattern necessarily change nahi hota.
+
+Short definition:
+
+TLS handshake = Browser aur server ke darmiyan secure HTTPS communication establish karne ka initial process.
+
+2. Task 1 — Proxy & Header Middleware
+
+Is task mein hum ek middleware layer banayenge.
+
+Middleware crawler aur website ke darmiyan kaam karega:
+
+Crawler
+   ↓
+Middleware
+   ├── Proxy select
+   ├── User-Agent select
+   ├── Accept-Language
+   ├── Referer
+   ↓
+Website
+
+Yani crawler ko har request par manually proxy aur headers set nahi karne padenge.
+
+Example:
+
+headers = {
+    "User-Agent": "...",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://example.com/"
+}
+
+Middleware automatically request ko prepare karega.
+
+3. Task 2 — Human-like Interaction
+
+Is part mein hum browser automation ke behavior ko less deterministic samajhte hain.
+
+Randomized Delay Jitter
+
+Agar script exactly har 2 seconds baad action kare:
+
+Request → 2 sec
+Request → 2 sec
+Request → 2 sec
+Request → 2 sec
+
+to behavior bohat predictable hai.
+
+Jitter mein delay vary ho sakta hai:
+
+Request → 1.2 sec
+Request → 2.4 sec
+Request → 0.9 sec
+Request → 1.8 sec
+
+Is concept ko delay jitter kehte hain.
+
+Dynamic Mouse Trajectory
+
+Normal automation mein mouse directly:
+
+A ─────────────→ B
+
+move kar sakta hai.
+
+Human-like trajectory ko conceptually intermediate points ke through represent kiya ja sakta hai:
+
+A → P1 → P2 → P3 → B
+
+Yani movement perfectly straight aur deterministic nahi hoti.
+
+Important: Real websites ke anti-bot controls ko bypass karne ke bajaye is task ka educational purpose browser automation behavior aur interaction modeling ko samajhna hona chahiye.
+
+4. Task 3 — Proxy Health Monitoring
+
+Ye task bohat important hai.
+
+Humare paas proxy pool hai:
+
+Proxy A → Healthy
+Proxy B → Timeout
+Proxy C → Healthy
+Proxy D → Rate Limited
+Proxy E → Healthy
+
+Health checker proxies ko test karega.
+
+Agar:
+
+Proxy B
+   ↓
+Health Check
+   ↓
+Timeout
+   ↓
+UNHEALTHY
+
+to proxy ko temporarily pool se remove kar diya jayega.
+
+Phir:
+
+Healthy Proxies
+      ↓
+A, C, E
+      ↓
+New Requests
+
+Jab Proxy B dobara available ho, usko retest karke pool mein wapas add kiya ja sakta hai.
+
+Complete Architecture
+
+Pura task kuch is tarah hai:
+
+                  Proxy Pool
+             ┌────┬────┬────┐
+             │ A  │ B  │ C  │
+             └────┴────┴────┘
+                     ↓
+              Health Monitor
+                     ↓
+             Healthy Proxies
+                     ↓
+              Request Middleware
+              ┌──────┴──────┐
+              │             │
+        Proxy Selection   Headers
+              │             │
+              └──────┬──────┘
+                     ↓
+              Browser/Crawler
+                     ↓
+                  Website
+Simple Summary
+
+Is task mein hum basically 4 cheezen seekh rahe hain:
+
+1. Identity: Browser fingerprinting aur JA3 se client ko identify kiya ja sakta hai.
+
+2. Network: IP blocking aur proxies ko samajhna.
+
+3. Middleware: Proxy + User-Agent + headers ko centrally manage karna.
+
+4. Reliability: Dead, timeout ya rate-limited proxies ko automatically detect karke pool se temporarily remove karna.
+
+Yani previous tasks mein humne scraping/crawling seekha tha; ab hum uske upar network management + proxy management + browser interaction ka layer add kar rahe hain.
+
+Task 1 — Proxy & Header Middleware
+
+Task ka main goal tha:
+
+Ek middleware layer banana jo requests ke liye proxy aur custom headers centrally manage kare.
+
+Hamari file:
+
+ProxyMiddleware_Task1.py
+1. Middleware kya hai?
+
+Middleware ko tum crawler aur website ke darmiyan ek layer samjho.
+
+Normally:
+
+Crawler → Website
+
+Middleware ke saath:
+
+Crawler
+   ↓
+Middleware
+   ↓
+Website
+
+Middleware request website tak jane se pehle uski configuration manage karta hai.
+
+Hamare case mein middleware:
+
+Proxy select karta hai
+User-Agent select karta hai
+Headers set karta hai
+Final request configuration return karta hai
+2. Proxy Pool
+
+Code mein:
+
+self.proxies = [
+    "http://proxy1.example.com:8080",
+    "http://proxy2.example.com:8080",
+    "http://proxy3.example.com:8080",
+]
+
+Ye proxy pool hai.
+
+Matlab hamare paas multiple proxy endpoints available hain.
+
+Concept:
+
+Proxy Pool
+├── Proxy 1
+├── Proxy 2
+└── Proxy 3
+
+Agar ek proxy unavailable ho, future mein health-monitoring system doosre available proxy ko use kar sakta hai.
+
+3. random.choice() kya kar raha hai?
+return random.choice(self.proxies)
+
+Ye proxy list mein se ek proxy randomly select karta hai.
+
+Example:
+
+Run 1 → Proxy 2
+Run 2 → Proxy 1
+Run 3 → Proxy 3
+
+Tumhare run mein:
+
+Selected Proxy:
+http://proxy3.example.com:8080
+
+Iska matlab Proxy 3 select hua.
+
+4. User-Agent Pool
+
+Humne multiple User-Agents rakhe:
+
+self.user_agents = [
+    "Chrome...",
+    "Firefox...",
+    "Chrome..."
+]
+
+Isko User-Agent pool kehte hain.
+
+User-Agent server ko client/browser ke baare mein information provide karta hai.
+
+Middleware:
+
+random.choice(self.user_agents)
+
+ke through pool mein se ek User-Agent select karta hai.
+
+5. Custom Headers
+
+Humne 3 headers use kiye:
+
+User-Agent
+"User-Agent": random.choice(self.user_agents)
+
+Ye selected browser/client identity string provide karta hai.
+
+Accept-Language
+"Accept-Language": "en-US,en;q=0.9"
+
+Ye server ko batata hai ke client kin languages ko prefer karta hai.
+
+Referer
+"Referer": "https://example.com/"
+
+Ye request ke referring page ko represent karta hai.
+
+6. get_headers()
+
+Ye method:
+
+def get_headers(self):
+
+headers ka dictionary banata hai:
+
+{
+    User-Agent: ...,
+    Accept-Language: ...,
+    Referer: ...
+}
+
+Yani iska kaam hai:
+
+Request ke liye custom headers prepare karna.
+
+7. prepare_request()
+
+Ye hamare task ka important part hai:
+
+def prepare_request(self):
+    proxy = self.get_proxy()
+    headers = self.get_headers()
+
+    return {
+        "proxy": proxy,
+        "headers": headers,
+    }
+
+Ye dono cheezen combine karta hai:
+
+Proxy
+  +
+Headers
+  ↓
+Request Configuration
+
+Example:
+
+{
+    proxy: Proxy 3,
+
+    headers:
+        User-Agent: Chrome
+        Accept-Language: en-US
+        Referer: example.com
+}
+8. Complete Flow
+
+Tumhare Task 1 ka complete flow:
+
+              Proxy Pool
+            ┌────┬────┬────┐
+            │ P1 │ P2 │ P3 │
+            └────┴────┴────┘
+                    ↓
+              Select Proxy
+                    ↓
+             ┌─────────────┐
+             │ Middleware  │
+             └─────────────┘
+                    ↑
+              Select User-Agent
+                    ↑
+             User-Agent Pool
+                    ↓
+              Custom Headers
+                    ↓
+             Request Config
+9. Tumhare Output ka Meaning
+
+Tumhare output mein:
+
+Selected Proxy:
+http://proxy3.example.com:8080
+
+iska matlab:
+
+Proxy pool se Proxy 3 select hua.
+
+Phir:
+
+User-Agent: Mozilla/5.0 ... Chrome/153...
+
+iska matlab:
+
+User-Agent pool se Chrome wala User-Agent select hua.
+
+Aur:
+
+Accept-Language: en-US,en;q=0.9
+Referer: https://example.com/
+
+ye dono manually defined custom headers hain.
+
+10. Ek Important Point
+
+Abhi:
+
+proxy1.example.com
+proxy2.example.com
+proxy3.example.com
+
+real proxies nahi hain.
+
+Ye sirf placeholders hain taake hum middleware ka architecture aur selection logic test kar saken.
+
+Isliye hamara current program:
+
+Proxy select karta hai
+        ↓
+Headers prepare karta hai
+        ↓
+Configuration print karta hai
+
+Lekin actual proxy ke through website ko request nahi bhej raha.
+
+Task 1 ka One-Line Concept
+
+Task 1 mein humne middleware banaya jo proxy pool se proxy aur User-Agent pool se User-Agent select karke custom request headers ke saath ek request configuration prepare karta hai.
+
+Tumhein ye 5 cheezen yaad honi chahiye:
+
+Proxy Pool → Proxy Selection → User-Agent Pool → Custom Headers → Request Middleware
+
+Task 2 — Human-Like Interaction Behaviors
+
+Is task ka main purpose hai browser automation mein fixed/deterministic behavior ke bajaye variable interaction patterns model karna.
+
+Hamare task ke 2 parts thay:
+
+Randomized Delay Jitter
+Dynamic Mouse Trajectory
+1. Randomized Delay Jitter
+
+Normally agar automation mein hum likhein:
+
+time.sleep(2)
+
+to har dafa exactly 2 seconds wait hoga.
+
+Hamare code mein:
+
+delay = random.uniform(
+    self.min_delay,
+    self.max_delay
+)
+
+Aur values hain:
+
+self.min_delay = 0.8
+self.max_delay = 2.5
+
+Iska matlab program 0.8 se 2.5 seconds ke darmiyan koi random value select karega.
+
+Tumhare run mein:
+
+Delay: 1.91 seconds
+
+phir:
+
+Delay: 2.50 seconds
+
+Dono delays different thay.
+
+Concept:
+
+Randomized delay jitter = fixed waiting time ke bajaye variable waiting time use karna.
+
+2. Dynamic Mouse Trajectory
+
+Agar mouse ko directly:
+
+Start ──────────────────> End
+
+move karaya jaye, to movement completely deterministic hogi.
+
+Hamare code mein:
+
+steps = random.randint(8, 15)
+
+Yeh decide karta hai ke mouse movement ko kitne intermediate steps mein divide karna hai.
+
+Tumhare run mein:
+
+Mouse movement steps: 13
+
+Yani mouse ne start aur end position ke darmiyan 13 intermediate movements use kiye.
+
+progress kya karta hai?
+
+Code:
+
+progress = step / steps
+
+Ye calculate karta hai ke mouse apni journey ka kitna portion complete kar chuka hai.
+
+Example:
+
+Agar total steps 10 hain:
+
+Step 1  → 10%
+Step 2  → 20%
+Step 3  → 30%
+...
+Step 10 → 100%
+
+Phir:
+
+current_x = start_x + (end_x - start_x) * progress
+current_y = start_y + (end_y - start_y) * progress
+
+start aur end coordinates ke beech current position calculate hoti hai.
+
+Small Random Variation
+
+Phir code:
+
+current_x += random.uniform(-3, 3)
+current_y += random.uniform(-3, 3)
+
+mouse ki position mein small random variation add karta hai.
+
+Yani movement perfectly identical nahi rehti.
+
+Iske baad:
+
+page.mouse.move(current_x, current_y)
+
+Playwright browser ke mouse ko us calculated position par move karta hai.
+
+Playwright ka role
+with sync_playwright() as p:
+
+Playwright automation environment start karta hai.
+
+Phir:
+
+browser = p.chromium.launch(
+    headless=False
+)
+
+Chromium launch hota hai.
+
+headless=False ka matlab browser visible hota hai.
+
+Phir:
+
+page = browser.new_page()
+
+new browser page/tab create hota hai.
+
+Aur:
+
+page.goto("https://example.com")
+
+website open karta hai.
+
+Complete Flow
+
+Tumhare Task 2 ka complete flow:
+
+Start
+  ↓
+Launch Chromium
+  ↓
+Open example.com
+  ↓
+Page Loaded
+  ↓
+Random Delay
+  ↓
+Calculate Mouse Steps
+  ↓
+Calculate Intermediate Coordinates
+  ↓
+Add Small Random Variation
+  ↓
+Move Mouse
+  ↓
+Random Delay
+  ↓
+Task Completed
+  ↓
+Close Browser
+
+Task 3 — Proxy Health-Check Monitoring
+
+Task 1 mein humne proxy pool banaya tha, aur Task 2 mein browser interaction behavior handle kiya tha.
+
+Task 3 ka purpose hai:
+
+Proxy pool ke andar har proxy ki health check karna aur jo proxy kaam nahi kar raha ya rate-limited hai usko active pool se remove karna.
+
+1. Proxy Pool
+
+Sabse pehle:
+
+self.proxies = [
+    "http://proxy1.example.com:8080",
+    "http://proxy2.example.com:8080",
+    "http://proxy3.example.com:8080",
+]
+
+Ye hamara complete proxy pool hai.
+
+Conceptually:
+
+Proxy 1
+Proxy 2
+Proxy 3
+
+Ye URLs demo/placeholder proxies hain. Actual proxy servers nahi hain.
+
+2. Active Proxy Pool
+self.active_proxies = self.proxies.copy()
+
+Initially hum assume karte hain ke saare proxies available hain.
+
+Active Proxies:
+
+Proxy 1
+Proxy 2
+Proxy 3
+
+.copy() original list ki copy banata hai.
+
+Iska benefit ye hai ke hum active_proxies ko modify kar sakte hain without directly modifying self.proxies.
+
+3. Unhealthy Proxies
+self.unhealthy_proxies = {}
+
+Ye ek dictionary hai jahan hum problematic proxies store karenge.
+
+Example:
+
+Proxy 2 → cooldown
+Proxy 3 → unhealthy
+4. check_proxy()
+def check_proxy(self, proxy):
+
+Ye function ek particular proxy ki health check karta hai.
+
+Demo mein:
+
+status = random.choice([200, 200, 200, 429, 500])
+
+Randomly ek status select hota hai.
+
+Possible values:
+
+200
+429
+500
+200
+if status == 200:
+    return "healthy"
+
+Matlab proxy healthy hai.
+
+429
+if status == 429:
+    return "rate_limited"
+
+429 ka meaning hai Too Many Requests.
+
+Hamare system mein iska matlab:
+
+Proxy ko temporarily active pool se remove karo aur cooldown state mein rakho.
+
+500
+
+Agar 200 ya 429 nahi hai:
+
+return "unhealthy"
+
+Yahan 500 ko unhealthy treat kiya gaya hai.
+
+5. monitor_proxy()
+
+Ye Task 3 ka important function hai.
+
+def monitor_proxy(self, proxy):
+
+Iska kaam hai:
+
+Proxy ko check karna aur uski status ke according proxy pool update karna.
+
+Sabse pehle:
+
+status = self.check_proxy(proxy)
+
+Yani check_proxy() se status obtain hota hai.
+
+Healthy Proxy
+
+Agar:
+
+status = healthy
+
+to:
+
+if proxy not in self.active_proxies:
+    self.active_proxies.append(proxy)
+
+Proxy active pool mein ensure kiya jata hai.
+
+Aur:
+
+self.unhealthy_proxies.pop(proxy, None)
+
+Agar proxy pehle unhealthy list mein tha, to usko remove kar dete hain.
+
+So:
+
+Unhealthy → Healthy
+
+hone par proxy wapas active pool mein aa sakta hai.
+
+6. Rate-Limited Proxy
+
+Agar:
+
+status = rate_limited
+
+to:
+
+if proxy in self.active_proxies:
+    self.active_proxies.remove(proxy)
+
+Proxy active pool se remove hota hai.
+
+Phir:
+
+self.unhealthy_proxies[proxy] = "cooldown"
+
+Uski state store hoti hai:
+
+Proxy 2 → cooldown
+
+Yani ye proxy temporarily inactive hai.
+
+7. Unhealthy Proxy
+
+Agar proxy unhealthy hai:
+
+if proxy in self.active_proxies:
+    self.active_proxies.remove(proxy)
+
+Isko active pool se remove kar dete hain.
+
+Phir:
+
+self.unhealthy_proxies[proxy] = "unhealthy"
+
+Dictionary mein record:
+
+Proxy 3 → unhealthy
+8. run_health_checks()
+
+Ab ye function poore proxy pool ko check karta hai.
+
+for proxy in self.proxies:
+    self.monitor_proxy(proxy)
+
+Agar 3 proxies hain:
+
+Proxy 1 → Check
+Proxy 2 → Check
+Proxy 3 → Check
+
+Har proxy ke liye monitor_proxy() call hota hai.
+
+time.sleep(1)
+time.sleep(1)
+
+Har health check ke darmiyan 1 second ka pause hai.
+
+Ye demo mein checks ko readable banata hai aur immediately sequential calls ko avoid karta hai.
+
+9. Final Active Proxies
+
+End mein:
+
+if self.active_proxies:
+
+check hota hai ke koi healthy/active proxy available hai ya nahi.
+
+Agar available hain:
+
+Active Proxies:
+- Proxy 1
+- Proxy 3
+
+Agar koi nahi:
+
+No healthy proxies available.
+10. Inactive Proxies
+
+Phir:
+
+for proxy, reason in self.unhealthy_proxies.items():
+
+har inactive proxy aur uski reason print hoti hai.
+
+Example:
+
+Inactive Proxies:
+
+- Proxy 2 -> cooldown
+- Proxy 3 -> unhealthy
+Complete Flow
+
+Task 3 ko ek simple flow mein yaad rakho:
+
+             Proxy Pool
+                 ↓
+          Check Each Proxy
+                 ↓
+        ┌────────┼────────┐
+        ↓        ↓        ↓
+       200      429      500
+        ↓        ↓        ↓
+    Healthy   Cooldown  Unhealthy
+        ↓        ↓        ↓
+     Active    Remove    Remove
+      Pool    Temporarily from Active
+Simple example
+
+Suppose result aaye:
+
+Proxy 1 → 200
+Proxy 2 → 429
+Proxy 3 → 500
+
+Final state:
+
+ACTIVE PROXIES
+└── Proxy 1
+
+INACTIVE PROXIES
+├── Proxy 2 → cooldown
+└── Proxy 3 → unhealthy
+Task 1 vs Task 2 vs Task 3
+Task	Main Purpose
+Task 1	Proxy + User-Agent + Headers manage karna
+Task 2	Variable delays + mouse interaction model karna
+Task 3	Proxy health monitor aur pool status manage karna
+
+So overall architecture ab:
+
+Task 1
+Proxy Middleware
+      ↓
+Select Proxy + Headers
+      ↓
+Task 2
+Browser Interaction
+      ↓
+Task 3
+Proxy Health Monitoring
+      ↓
+Healthy Proxy Pool Maintain
+
+Task 3 ka core concept ek line mein:
+
+"Jo proxy healthy hai usko active rakho, jo rate-limited hai usko temporarily cooldown mein rakho, aur jo unhealthy hai usko active pool se remove karo."
+
+PROXY ROTATION AND ANTI-BOT RESILIENCE — Complete Summary
+
+Aaj humne 3 tasks complete kiye. Overall focus tha proxy management, request configuration, browser interaction modeling, aur proxy health monitoring.
+
+Task 1 — Proxy Middleware
+
+File: ProxyMiddleware_Task1.py
+
+Humne ek middleware layer banayi jo:
+
+Proxy pool maintain karti hai.
+random.choice() se proxy select karti hai.
+Multiple User-Agent strings ka pool maintain karti hai.
+Random User-Agent select karti hai.
+Custom headers set karti hai:
+User-Agent
+Accept-Language
+Referer
+prepare_request() proxy aur headers ko ek request configuration mein combine karta hai.
+
+Flow:
+
+Proxy Pool
+    ↓
+Random Proxy Selection
+    ↓
+User-Agent Pool
+    ↓
+Custom Headers
+    ↓
+Request Configuration
+Task 2 — Human-Like Interaction
+
+File: InteractionBehavior_Task2.py
+
+Is task mein Playwright use karke browser interaction modeling ki.
+
+Part 1 — Randomized Delay Jitter
+
+Fixed:
+
+2 seconds → 2 seconds → 2 seconds
+
+ke bajaye random delay:
+
+1.21s → 2.34s → 1.87s
+
+use kiya.
+
+Hamare code mein:
+
+random.uniform(0.8, 2.5)
+
+use hua.
+
+Part 2 — Dynamic Mouse Trajectory
+
+Mouse ko direct start-to-end move karne ke bajaye:
+
+Random number of intermediate steps.
+Intermediate coordinates.
+Small coordinate variations.
+Playwright mouse movement.
+
+use kiya.
+
+Tumhare successful run mein:
+
+Delay: 1.91 seconds
+Mouse movement steps: 13
+Mouse movement completed.
+Delay: 2.50 seconds
+Task 2 completed.
+
+Flow:
+
+Launch Chromium
+      ↓
+Open Website
+      ↓
+Random Delay
+      ↓
+Calculate Mouse Path
+      ↓
+Move Mouse
+      ↓
+Random Delay
+      ↓
+Complete
+Task 3 — Proxy Health Monitoring
+
+File: ProxyHealthMonitor_Task3.py
+
+Is task mein proxy pool ki health monitor ki.
+
+Three simulated statuses:
+
+200 → Healthy
+429 → Rate Limited
+500 → Unhealthy
+
+System ke paas:
+
+self.proxies
+
+= complete proxy pool
+
+self.active_proxies
+
+= currently active/usable proxies
+
+self.unhealthy_proxies
+
+= inactive/problematic proxies
+
+Tumhare successful run mein:
+
+Proxy 1 → 429 → RATE LIMITED → cooldown
+Proxy 2 → 200 → HEALTHY
+Proxy 3 → 429 → RATE LIMITED → cooldown
+
+Final result:
+
+Active Proxies:
+- proxy2
+
+Inactive Proxies:
+- proxy1 → cooldown
+- proxy3 → cooldown
+
+Flow:
+
+Proxy Pool
+    ↓
+Health Check
+    ↓
+ ┌──────┼─────────┐
+ ↓      ↓         ↓
+200    429       500
+ ↓      ↓         ↓
+Healthy Rate     Unhealthy
+       Limited
+ ↓      ↓         ↓
+Active Cooldown Remove
+Pool             ↓
+              Inactive
+Final Folder Structure
+PROXY_ROTATION_AND_ANTI_BOT_RESILIENCE/
+│
+├── ProxyMiddleware_Task1.py
+├── InteractionBehavior_Task2.py
+└── ProxyHealthMonitor_Task3.py
+Overall Concept
+Task 1
+Proxy + Headers
+      ↓
+Task 2
+Browser Interaction
+      ↓
+Task 3
+Proxy Health Monitoring
+      ↓
+Maintain Healthy Active Pool
+Final Status
+Task	Status
+Proxy Middleware	✅ Complete
+Randomized Delay Jitter	✅ Complete
+Dynamic Mouse Trajectory	✅ Complete
+Proxy Health Monitoring	✅ Complete
+Overall Daily Task	✅ Complete
+
+One-line summary:
+
+Humne ek proxy-management architecture banaya jo request configuration ke liye proxies/headers manage karta hai, Playwright mein variable browser interaction model karta hai, aur proxy health ke basis par active/inactive proxy pool maintain karta hai.
