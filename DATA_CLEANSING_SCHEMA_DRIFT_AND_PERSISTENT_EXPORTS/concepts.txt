@@ -1,0 +1,457 @@
+Theoretical Concepts
+1. Data Cleansing
+
+Data cleansing is the process of taking raw scraped data and converting it into clean, consistent, valid, and usable data.
+
+Websites often return data like:
+
+"  $245.20 "
+"1.25%"
+"N/A"
+"MSFT "
+
+Before storing this data, we need to clean it.
+
+For example:
+
+"  $245.20 " → 245.20
+"1.25%"      → 1.25
+"MSFT "      → "MSFT"
+
+The goal is:
+
+Raw Web Data → Clean Structured Data
+
+2. Data Normalization
+
+Normalization means converting different representations of the same type of information into one consistent format.
+
+For example, a website might provide:
+
+$245.20
+245.20
+$245.20 USD
+
+All of these represent the same price, so our scraper should normalize them to:
+
+245.20
+
+Similarly:
+
++1.25%
+1.25%
+1.25
+
+can be normalized to:
+
+1.25
+
+This makes the data easier to process and analyze.
+
+3. Data Type Conversion
+
+Scraped information usually arrives as text, even when the information represents a number.
+
+For example:
+
+price = "245.20"
+
+This is a string, not a number.
+
+We need:
+
+price = float("245.20")
+
+which produces:
+
+245.20
+
+Similarly:
+
+"100" → 100
+"245.20" → 245.20
+
+Correct data types are important for calculations, comparisons, sorting, and database storage.
+
+4. Required Fields
+
+A required field is a field that must exist for a record to be considered valid.
+
+For our market dataset, we might define:
+
+symbol
+price
+change_percent
+
+as required fields.
+
+A valid record:
+
+{
+    "symbol": "AAPL",
+    "price": 245.20,
+    "change_percent": 1.25
+}
+
+An invalid record:
+
+{
+    "symbol": "AAPL",
+    "price": 245.20
+}
+
+because change_percent is missing.
+
+This is directly related to today's requirement of zero missing required fields in production exports.
+
+5. Data Validation
+
+Validation checks whether cleaned data satisfies the rules we have defined.
+
+For example:
+
+symbol → must not be empty
+price → must be a number
+change_percent → must be a number
+
+We can therefore think of the pipeline as:
+
+Extract
+   ↓
+Clean
+   ↓
+Normalize
+   ↓
+Validate
+   ↓
+Store
+
+Invalid records should be rejected or logged instead of silently entering the final dataset.
+
+6. Schema
+
+A schema defines the expected structure of our data.
+
+For example:
+
+MarketRecord
+├── symbol: string
+├── price: float
+└── change_percent: float
+
+So every valid market record should follow this structure.
+
+Example:
+
+{
+    "symbol": "MSFT",
+    "price": 510.30,
+    "change_percent": -0.42
+}
+
+The schema tells our application:
+
+"This is what a valid market record is supposed to look like."
+
+7. Schema Drift
+
+Schema drift occurs when the structure of the data changes over time.
+
+This is particularly important in web scraping because we don't control the target website.
+
+For example, today the website might contain:
+
+<span class="price">245.20</span>
+
+Our scraper uses:
+
+.price
+
+Later, the website changes it to:
+
+<div class="current-price">245.20</div>
+
+Now:
+
+.price
+
+no longer works.
+
+The data hasn't necessarily disappeared — the structure changed.
+
+That is schema drift.
+
+8. Structural Schema Drift
+
+Structural schema drift is specifically concerned with changes in the HTML/DOM structure.
+
+For example:
+
+Old structure
+<div class="stock">
+    <span class="symbol">AAPL</span>
+    <span class="price">245.20</span>
+</div>
+New structure
+<article data-symbol="AAPL">
+    <div class="market-info">
+        <strong>245.20</strong>
+    </div>
+</article>
+
+The information still exists, but its location and structure have changed.
+
+A resilient scraper must be able to deal with these changes.
+
+9. Selector Fragility
+
+A scraper can become fragile when it depends heavily on one specific selector.
+
+For example:
+
+soup.select_one("#main > div:nth-child(3) > span.price")
+
+This can easily break if the website adds or removes a <div>.
+
+A more resilient approach uses several extraction strategies instead of depending on one exact path.
+
+10. Fallback Extraction
+
+Fallback extraction means having alternative methods to obtain the same data when the primary extraction method fails.
+
+Conceptually:
+
+Primary CSS Selector
+        ↓
+      Failed?
+        ↓
+Secondary Selector / XPath
+        ↓
+      Failed?
+        ↓
+Structural DOM Traversal
+        ↓
+      Failed?
+        ↓
+Extraction Error
+
+This improves scraper resilience against structural changes.
+
+11. Structural DOM Traversal
+
+Instead of depending entirely on a specific class or ID, we can examine the surrounding DOM structure.
+
+For example:
+
+Stock Container
+      │
+      ├── Symbol
+      ├── Price
+      └── Change
+
+If a CSS class changes, we may still be able to locate the information based on:
+
+parent elements
+child elements
+attributes
+nearby labels
+element types
+relative position
+
+This is useful as a fallback, not necessarily as the first extraction method.
+
+12. Persistent Export
+
+After extracting and validating the data, we need to persist it.
+
+Persistence means saving the data somewhere so it remains available after the scraper finishes.
+
+Common options:
+
+JSON
+CSV
+Database
+
+For example:
+
+Scraper
+   ↓
+Validated Records
+   ↓
+JSON / CSV / Database
+
+Simply printing data to the terminal is not persistent storage.
+
+13. Bulk Export
+
+Bulk export means saving a collection of records together rather than writing each piece of information manually.
+
+For example, suppose we scrape:
+
+AAPL
+MSFT
+NVDA
+TSLA
+AMZN
+
+We can produce one dataset:
+
+market_data.json
+
+containing all valid records.
+
+This is particularly useful when a scraper processes hundreds or thousands of records.
+
+14. JSON vs CSV vs Database
+JSON
+
+Good for structured hierarchical data:
+
+{
+    "symbol": "AAPL",
+    "price": 245.20,
+    "change_percent": 1.25
+}
+CSV
+
+Good for tabular datasets:
+
+symbol,price,change_percent
+AAPL,245.20,1.25
+MSFT,510.30,-0.42
+Database
+
+Better when we need:
+
+large datasets
+querying
+updating records
+relationships
+persistent application storage
+
+For today's task, we'll primarily work with JSON/CSV, while understanding how the same validated records could eventually go into a database.
+
+15. Rejected Records
+
+Not every scraped record should be exported.
+
+For example:
+
+AAPL → valid
+MSFT → valid
+NVDA → missing price
+TSLA → invalid change
+
+We should separate them:
+
+Valid Records
+      ↓
+Production Export
+
+Invalid Records
+      ↓
+Rejected/Error Log
+
+This is much better than inserting incomplete data into the production dataset.
+
+16. The Complete Concept
+
+All today's theoretical concepts connect into one pipeline:
+
+                 WEBSITE
+                    │
+                    ▼
+             RAW HTML / DATA
+                    │
+                    ▼
+          FALLBACK EXTRACTION
+                    │
+                    ▼
+             DATA CLEANSING
+                    │
+                    ▼
+            NORMALIZATION
+                    │
+                    ▼
+             TYPE CONVERSION
+                    │
+                    ▼
+              VALIDATION
+               /       \
+              /         \
+           VALID       INVALID
+             │             │
+             ▼             ▼
+       JSON / CSV       ERROR LOG
+       / DATABASE
+Core idea to remember
+
+A production-quality scraper should not depend on one HTML structure and should not blindly export whatever it extracts.
+
+It should adapt to structural changes, clean the extracted values, validate the schema, reject incomplete records, and persist only reliable data.
+
+What was successfully demonstrated
+Fallback extraction
+AAPL → primary .price selector
+MSFT → [data-price] fallback
+NVDA → structural DOM fallback
+Data cleansing
+$245.20 → 245.20
++1.25% → 1.25
+-0.42% → -0.42
+Schema validation
+
+Every record contains:
+
+symbol
+price
+change_percent
+Persistent bulk export
+market_data.json
+market_data.csv
+Production-style pipeline
+Raw HTML
+   ↓
+Fallback Extraction
+   ↓
+Data Cleansing
+   ↓
+Type Conversion
+   ↓
+Pydantic Validation
+   ↓
+JSON / CSV
+
+JSON exported: OUTPUT\market_data.json
+CSV exported: OUTPUT\market_data.csv
+
+Successfully exported 3 records.
+
+So now the complete Daily Tasks are covered:
+
+✅ CSS primary extraction
+✅ XPath fallback extraction
+✅ Structural DOM fallback
+✅ Data cleansing and sanitization
+✅ Type conversion
+✅ Required-field validation
+✅ Zero missing required fields in exported records
+✅ JSON bulk export
+✅ CSV bulk export
+✅ Persistent OUTPUT files
+
+Your final extraction flow is:
+
+CSS Selector
+     ↓
+XPath Fallback
+     ↓
+Structural DOM Walk
+     ↓
+Clean & Sanitize
+     ↓
+Validate
+     ↓
+JSON / CSV
+
+Today's theoretical focus + technical daily tasks are now complete.

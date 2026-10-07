@@ -1,0 +1,17 @@
+[
+    {
+        "symbol": "AAPL",
+        "price": 245.2,
+        "change_percent": 1.25
+    },
+    {
+        "symbol": "MSFT",
+        "price": 510.3,
+        "change_percent": -0.42
+    },
+    {
+        "symbol": "NVDA",
+        "price": 180.5,
+        "change_percent": 2.1
+    }
+]
