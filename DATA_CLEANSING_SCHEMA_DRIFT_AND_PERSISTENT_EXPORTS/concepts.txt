@@ -390,6 +390,102 @@ A production-quality scraper should not depend on one HTML structure and should 
 
 It should adapt to structural changes, clean the extracted values, validate the schema, reject incomplete records, and persist only reliable data.
 
+1. Secondary CSS Selector
+
+CSS selectors use CSS-style patterns to find elements.
+
+Example HTML:
+
+<div class="stock">
+    <span class="price">$245.20</span>
+</div>
+
+CSS:
+
+stock.select_one(".price")
+
+It means:
+
+Find an element whose class is price.
+
+Another example:
+
+stock.select_one("[data-price]")
+
+It means:
+
+Find an element that has a data-price attribute.
+
+2. XPath
+
+XPath is a separate language specifically designed for navigating XML/HTML document trees.
+
+For example:
+
+tree.xpath(".//*[@data-price]/@data-price")
+
+It means:
+
+Starting from the current element, find any descendant that has a data-price attribute and return the value of that attribute.
+
+For:
+
+<div data-price="510.30"></div>
+
+XPath returns:
+
+510.30
+Simple comparison
+
+Suppose we have:
+
+<div class="market">
+    <div class="information">
+        <span data-price="510.30">510.30</span>
+    </div>
+</div>
+
+CSS:
+
+stock.select_one("[data-price]")
+
+XPath:
+
+tree.xpath(".//*[@data-price]")
+
+Both can find the same element.
+
+But XPath can perform more complex tree navigation.
+
+For example:
+
+tree.xpath(".//div[@class='information']/span[@data-price]")
+
+You can think of it as:
+
+CSS
+→ CSS-style element selection
+
+XPath
+→ HTML tree navigation + element selection
+Why use both in our scraper?
+
+Because websites can change differently.
+
+Our strategy is:
+
+Primary CSS
+      ↓
+If it breaks
+      ↓
+XPath
+      ↓
+If that also breaks
+      ↓
+Structural DOM walk
+
+So we're not using XPath because it is always "better" than CSS. We're using it as a different extraction mechanism, giving the scraper another way to find the data when the site's structure changes.
+
 What was successfully demonstrated
 Fallback extraction
 AAPL → primary .price selector
@@ -455,3 +551,4 @@ Validate
 JSON / CSV
 
 Today's theoretical focus + technical daily tasks are now complete.
+
