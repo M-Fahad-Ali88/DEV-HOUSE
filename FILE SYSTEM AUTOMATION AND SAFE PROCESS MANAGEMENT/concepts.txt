@@ -1,0 +1,125 @@
+Theoretical Focus: File System Operations, System Signals & Safe Subprocess Execution
+1. Main concepts
+
+1. File System Operations using pathlib
+
+pathlib is a Python module used to work with files and directories. It allows you to find files, check whether paths exist, create directories, and inspect file information.
+
+Important methods:
+
+Path.exists() — checks whether a path exists.
+
+Path.is_file() — checks whether a path is a file.
+
+Path.iterdir() — lists items in a directory.
+
+Path.rglob() — recursively searches directories.
+
+Path.stat() — retrieves file metadata.
+
+2. File Metadata and Stale Log Detection
+
+File metadata provides information about a file, such as its size and timestamps. A stale log file is a log file that has not been modified for a defined period.
+
+Important attributes:
+
+st_size — file size in bytes.
+
+st_mtime — last modification timestamp.
+
+st_ctime — creation time on Windows; metadata-change time on Unix-like systems.
+
+3. System Signals and Process Termination
+
+A process is a running program. Signals communicate events or termination requests to processes.
+
+SIGINT — interruption, commonly caused by pressing Ctrl + C.
+
+SIGTERM — requests graceful termination.
+
+SIGKILL — forcefully terminates a process on supported systems; it is not available on Windows.
+
+Python provides the signal module to handle supported signals and the subprocess module to manage external processes.
+
+4. Safe System Binary Execution using subprocess
+
+The subprocess module allows Python to execute external programs and system utilities.
+
+subprocess.run() — executes a command and normally waits for it to finish.
+
+subprocess.Popen() — starts a process and allows you to manage it.
+
+check=True — raises an exception if the command exits with a nonzero status.
+
+shell=False — avoids running the command through a shell.
+
+5. Shell Injection and Secure Command Execution
+
+Shell injection occurs when untrusted input is interpreted as part of a shell command, potentially allowing unintended commands to run.
+
+To reduce this risk, use argument lists instead of concatenating user input into command strings, keep shell=False, validate inputs, and use trusted executables.
+
+
+Task 1 — File system analyzer using pathlib
+
+This program recursively scans a directory, analyzes file sizes and modification timestamps, and flags stale log files without deleting them.
+
+Tasks Summary — File System Automation and Safe Process Management
+
+Folder: FILE SYSTEM AUTOMATION AND SAFE PROCESS MANAGEMENT
+
+Task 1: File System Analyzer — Main_Task_1.py
+
+Used pathlib to recursively scan directories with Path.rglob().
+
+Retrieved file metadata, including file size and last modification time.
+
+Implemented stale log detection for files older than 30 days.
+
+Tested the program by changing a log file's modification timestamp.
+
+Successfully flagged LOGS\app.log as a stale log file.
+
+Task 2: Safe Command Execution — Safe_Process_Task_2.py
+
+Used subprocess.run() to execute an external Python command.
+
+Passed command arguments as a list with shell=False.
+
+Captured command output using capture_output=True and text=True.
+
+Implemented error handling, a 30-second timeout, and check=True.
+
+Successfully executed the Python interpreter and displayed version 3.11.9.
+
+Task 3: Process Management — Process_Management_Task_3.py
+
+Used subprocess.Popen() to start a child process.
+
+Retrieved the process ID using process.pid.
+
+Used process.wait(timeout=3) to enforce a timeout.
+
+Terminated the child process with process.terminate() after the timeout.
+
+Confirmed that the child process exited, returning exit code 1 because it was terminated before normal completion.
+
+Concepts covered
+
+File system operations using pathlib
+
+File metadata and timestamps
+
+Recursive directory scanning
+
+Stale log detection
+
+System signals and process termination
+
+Secure subprocess execution and shell injection prevention
+
+subprocess.run() vs. subprocess.Popen()
+
+Process timeouts and error handling
+
+Status: All three tasks completed and tested successfully.
