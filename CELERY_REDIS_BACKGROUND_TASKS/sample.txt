@@ -1,0 +1,2 @@
+Celery executes background tasks using independent workers.
+Redis transports task messages between producers and consumers.
