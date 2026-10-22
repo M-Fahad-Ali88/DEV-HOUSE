@@ -1,0 +1,65 @@
+1. Theoretical Concepts
+1. Cloud Object Storage
+Cloud object storage stores files, such as logs, backups, and archives, in buckets. Python SDKs like AWS Boto3 allow applications to upload and manage these files.
+
+2. IAM Credentials Management
+Identity and Access Management (IAM) controls access to cloud resources. Access keys should be stored in environment variables rather than hardcoded into Python files.
+
+3. ThreadPoolExecutor
+ThreadPoolExecutor allows multiple I/O operations to execute concurrently using a pool of threads. This is useful when uploading multiple log archives to cloud storage.
+
+4. Celery Integration
+Celery executes background tasks using workers. Integrating it with ThreadPoolExecutor allows workers to upload multiple archives concurrently while keeping the main application responsive.
+2. Example Workflow
+1. The application generates log files.
+2. The files are compressed into ZIP archives.
+3. Celery receives an upload task.
+4. ThreadPoolExecutor uploads multiple archives concurrently.
+5. The cloud storage bucket stores the uploaded archives.
+6. The application records the upload status.
+3. Technologies Used
+- Python: Main programming language.
+- AWS Boto3: Python SDK for Amazon S3.
+- Celery: Background task processing.
+- ThreadPoolExecutor: Concurrent I/O operations.
+- Environment Variables: Secure credential configuration.
+- Redis: Celery message broker.
+- Amazon S3: Cloud object storage.
+4. Expected Outcome
+A Python application that securely connects to Amazon S3 and uploads compressed log archives concurrently through Celery workers, improving upload efficiency without unnecessarily blocking the main processing pipeline.
+
+Final project status
+Task 1 — S3 storage connection
+
+Boto3, environment variables, bucket creation
+
+Passed
+
+Task 2 — Background uploads
+
+Celery, Redis, ThreadPoolExecutor, ZIP compression
+
+Passed
+
+Three-file upload test
+
+All three ZIP archives verified in Moto storage
+
+Passed
+
+Configuration cleanup
+
+Requirements, .env.example, .gitignore corrected
+
+Passed
+
+
+Verified uploaded objects
+- sample.zip
+- sample2.zip
+- sample3.zip
+Your command confirmed all three objects exist in the compressed-logs bucket.
+One final recommendation
+Your concepts.txt file is still in the project root. Keep it if it contains your project notes; otherwise, remove it only if you no longer need it. Your ARCHIVES/ folder is generated output and is now excluded from Git.
+
+Project completion: Both required tasks are implemented and tested locally using Moto, without AWS charges. Keep in mind that Moto simulates S3; this test does not verify uploads against a real cloud provider.

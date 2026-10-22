@@ -1,0 +1,5 @@
+boto3
+celery
+redis
+python-dotenv
+moto[server]

@@ -1,0 +1,5 @@
+2026-10-22 10:00:00 INFO Application started
+2026-10-22 10:00:05 INFO Database connection established
+2026-10-22 10:00:10 WARNING High memory usage detected
+2026-10-22 10:00:15 ERROR Failed to process sample request
+2026-10-22 10:00:20 INFO Application recovered successfully
