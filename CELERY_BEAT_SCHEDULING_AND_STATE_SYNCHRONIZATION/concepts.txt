@@ -1,0 +1,19 @@
+Theoretical Focus — Main Concepts
+1. Deterministic Cron-Like Scheduling
+It means running tasks automatically at a fixed time or interval. For example, deleting temporary files every night at 12:00 AM without manually running a command.
+2. Celery Beat
+Celery Beat is a scheduler that determines when tasks should run. It sends scheduled tasks to a message broker such as Redis, and Celery workers execute them.
+3. Periodic Task Execution
+It means automatically repeating tasks according to a schedule. For example, cleaning logs every night, creating daily backups, or archiving files to cloud storage.
+4. State Synchronization
+It means keeping task status updated and consistent in a database. For example, when a worker completes a backup, the task status changes from Running to Completed in PostgreSQL or SQLite.
+5. Execution Metadata Tracking
+It means recording information about a task, such as its ID, status, start and completion times, error messages, and cloud storage URL. This helps track when and how a task was completed.
+6. Worker Pool Recovery
+It means handling situations where a worker crashes or stops while processing a task. The system should allow unfinished tasks to be processed again, depending on its configuration.
+7. Queue Redelivery
+It means that if a worker fails before acknowledging a task, the message broker may deliver that task again for processing. This reduces the risk of unfinished tasks being lost.
+8. Idempotency
+It means executing the same task multiple times without creating unwanted duplicate results.
+
+Example: If a worker crashes while creating a cloud archive and the task runs again, the system should safely reuse or update the existing archive instead of creating unnecessary duplicates.

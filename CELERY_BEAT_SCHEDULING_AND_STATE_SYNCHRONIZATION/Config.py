@@ -1,0 +1,6 @@
+
+import os
+
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+LOG_DIR = "TASK1_CELERY_BEAT_SCHEDULING/LOGS"
+LOG_RETENTION_DAYS = 7
