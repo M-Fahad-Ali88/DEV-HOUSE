@@ -17,3 +17,67 @@ It means that if a worker fails before acknowledging a task, the message broker 
 It means executing the same task multiple times without creating unwanted duplicate results.
 
 Example: If a worker crashes while creating a cloud archive and the task runs again, the system should safely reuse or update the existing archive instead of creating unnecessary duplicates.
+
+Task 1 — Celery Beat Scheduling
+
+Implemented periodic log cleanup using Celery Beat, with scheduling configuration and log retention settings.
+
+Folder: TASK1_CELERY_BEAT_SCHEDULING/
+
+
+
+Task 2 — Database State Tracking
+
+Used SQLite to persist task execution states, including successful and failed tasks.
+
+Folder: TASK2_DATABASE_STATE_TRACKING/
+
+
+
+Task 3 — Cloud Archiving Simulation
+
+Implemented local file archiving and verified that sample.txt was copied to the archive directory. This is a local simulation, not a real cloud upload.
+
+Folder: TASK3_CLOUD_ARCHIVING/
+
+
+
+Task 4 — Worker Recovery and Idempotency
+
+Implemented retries, persistent operation tracking, and duplicate-operation checks using SQLite. Retry behavior was tested.
+
+Folder: TASK4_WORKER_RECOVERY_AND_IDEMPOTENCY/
+
+
+
+Task 5 — Crash Recovery Testing
+
+Force-stopped the worker while operation-crash-005 was running, restarted the worker, and observed the same task ID being redelivered and completed successfully.
+
+Verified task ID: 8cecccf5-b76c-4078-8461-8dbe9ab773e0
+
+
+
+Task 6 — Final Project Verification
+- All discovered Python files passed py_compile.
+- All five Celery tasks were registered.
+- Both SQLite database files were found.
+- The archived sample.txt was verified.
+
+
+
+Task 7 — README Documentation
+
+Created the root README.md, documenting the technologies, tasks, project structure, setup, commands, and limitations.
+
+Verified file size: 3,246 bytes
+
+
+
+Task 8 — Git Ignore Configuration
+
+Added rules to exclude .env, virtual environments, Python cache files, logs, Celery Beat runtime files, and common development caches. Confirmed the ignore patterns work with git check-ignore.
+
+Task 9 — Push to GitHub
+
+Pending. We need to verify the Git repository, remote URL, and current branch before staging, committing, and pushing.
