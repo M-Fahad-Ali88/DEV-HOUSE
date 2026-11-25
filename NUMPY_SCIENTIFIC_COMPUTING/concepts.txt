@@ -1,0 +1,873 @@
+NumPy Scientific Computing – Complete Theory
+Theory 1: Scientific Computing with NumPy
+1. What is Scientific Computing?
+Scientific computing is the use of computers to solve mathematical, scientific, and engineering problems through numerical calculations.
+
+It involves:
+- Mathematical computations.
+- Large datasets.
+- Statistical analysis.
+- Matrix operations.
+- Numerical simulations.
+- Financial calculations.
+Example:
+
+Suppose we have stock prices for 1 million trading observations. We want to calculate their average, standard deviation, and daily returns.
+
+Performing these calculations manually or through ordinary Python loops can be inefficient.
+
+This is where NumPy becomes useful.
+2. What is NumPy?
+NumPy (Numerical Python) is a Python library designed for efficient numerical computing.
+
+Its primary data structure is the ndarray (N-dimensional array).
+
+Unlike ordinary Python lists, NumPy arrays are designed to store numerical data efficiently and perform operations on entire collections of values.
+3. Python Lists vs NumPy Arrays
+Consider these two data structures:
+
+Standard Python list:
+numbers = [10, 20, 30, 40, 50]
+
+
+
+NumPy array:
+numbers = np.array([10, 20, 30, 40, 50])
+
+
+
+Their fundamental differences:
+Feature	Python List	NumPy Array
+Data types	Can contain mixed types	Generally homogeneous
+Memory	Higher overhead	More memory-efficient
+Mathematical operations	Often require loops	Supports vectorized operations
+Performance	Slower for large numerical operations	Generally faster
+Multidimensional data	Nested lists	Native N-dimensional arrays
+
+4. Why is NumPy Faster?
+There are several reasons:
+1. Contiguous numerical storage: NumPy can store array elements in compact memory regions.
+2. Vectorization: Operations can process entire arrays without explicit Python-level loops.
+3. Compiled implementation: Many numerical operations execute through optimized compiled code.
+4. Reduced Python overhead: NumPy avoids repeatedly interpreting individual numerical operations in Python loops.
+An important distinction: NumPy is not automatically faster for every operation. Performance depends on array size, operation type, memory layout, and implementation.
+5. What is Scientific Computing Used For?
+- Machine learning and artificial intelligence.
+- Financial market analysis.
+- Scientific simulations.
+- Image processing.
+- Statistical calculations.
+- Engineering applications.
+- Data analysis.
+Key takeaway: NumPy provides an efficient foundation for numerical computing, especially when working with large datasets and mathematical operations.
+
+Theory 2: N-Dimensional Array Architecture
+1. What is an Array?
+An array is a collection of elements stored in an organized structure.
+
+NumPy uses an object called ndarray, which supports multiple dimensions.
+
+The number of dimensions determines the structure of an array.
+2. Types of Arrays
+1D Array – One Dimension
+
+
+
+
+
+
+
+
+pranjal28.hashnode.dev
+
+
+Example:
+
+[10, 20, 30, 40, 50]
+
+A simple sequence of elements.
+
+2D Array – Two Dimensions
+
+
+
+
+
+
+
+
+medium.com
+
+
+Example:
+[[1, 2, 3],
+ [4, 5, 6],
+ [7, 8, 9]]
+
+
+Organized into rows and columns.
+
+3D Array – Three Dimensions
+
+
+
+
+
+
+
+
+inf100v25.stromme.me
+
+
+Example:
+
+A collection of multiple 2D matrices organized along another dimension.
+
+3. Important Array Properties
+There are four important properties of a NumPy array.
+Property	Meaning
+ndim	Number of dimensions
+shape	Size along each dimension
+size	Total number of elements
+dtype	Data type of elements
+
+For example, imagine an array with:
+- 3 rows.
+- 4 columns.
+- Integer elements.
+Its properties would be:
+Property	Result
+ndim	2
+shape	(3, 4)
+size	12
+dtype	int
+
+4. What is Data Type (dtype)?
+A data type determines what kind of values an array stores and how much memory each element requires.
+
+Common NumPy data types:
+Data type	Description	Typical size
+int32	32-bit integer	4 bytes
+int64	64-bit integer	8 bytes
+float32	32-bit floating point	4 bytes
+float64	64-bit floating point	8 bytes
+bool	Boolean	1 byte
+
+For example, an array containing 1 million float64 elements requires approximately 8 MB of raw element storage.
+5. Homogeneous Array Architecture
+NumPy arrays generally store elements using one common data type.
+
+For example:
+[10, 20, 30, 40]
+
+
+If these are int32, each element occupies 4 bytes.
+
+This makes numerical storage predictable and allows efficient memory access.
+
+Key takeaway: N-dimensional arrays provide an organized numerical structure, while shape, dimensions, size, and data type describe their architecture.
+
+Theory 3: Memory Strides
+This is one of the most important concepts in advanced NumPy.
+1. What are Memory Strides?
+Memory strides describe how many bytes NumPy must move in memory to access the next element along a particular dimension.
+
+In simple words:
+
+Strides tell NumPy where the next element is located in memory.
+
+Consider a 2D array:
+[[10, 20, 30],
+ [40, 50, 60]]
+
+
+Assume each element occupies 8 bytes (float64).
+
+Its memory layout in C-order is conceptually:
+10 → 20 → 30 → 40 → 50 → 60
+
+
+The strides would be:
+(24, 8)
+
+
+Why?
+- 24 bytes to move to the next row.
+- 8 bytes to move to the next column.
+2. How Are Strides Calculated?
+For a C-contiguous 2D array with 3 columns and 8-byte elements:
+\[
+\text{Row stride}=3\times8=24
+\]
+
+\[
+\text{Column stride}=8
+\]
+
+Therefore:
+\[
+\text{Strides}=(24,8)
+\]
+
+For an array with shape (2, 3):
+Dimension	Stride
+Rows	24 bytes
+Columns	8 bytes
+
+3. Why Are Strides Important?
+Strides allow NumPy to access elements without necessarily rearranging or copying the underlying data.
+
+For example, when you transpose a matrix, NumPy can often create a new view with different strides rather than physically rearranging all its elements.
+
+This is an important optimization.
+4. Views vs Copies
+View: A new array object that references the same underlying data.
+
+Copy: A separate array with its own data storage.
+
+Why does this matter?
+- Views can save memory.
+- Copies require additional memory.
+- Modifying a view can affect the original array.
+- Modifying an independent copy does not affect the original.
+Key takeaway: Strides explain how NumPy navigates memory and are essential for understanding array performance, views, and transposition.
+
+Theory 4: Contiguous Memory Layouts
+1. What is Contiguous Memory?
+Contiguous memory means that array elements are arranged sequentially in a continuous block of memory according to a particular layout.
+
+NumPy supports two major memory layouts:
+- C-order (Row-major).
+- Fortran-order (Column-major).
+2. C-Order (Row-Major)
+In C-order, elements from the same row are stored consecutively.
+
+Consider:
+1  2  3
+4  5  6
+
+
+Memory arrangement:
+1 → 2 → 3 → 4 → 5 → 6
+
+
+The first row is stored before the second row.
+
+
+
+
+
+
+
+
+cnblogs.com
+
+
+3. Fortran-Order (Column-Major)
+In Fortran-order, elements from the same column are stored consecutively.
+
+For the same matrix:
+1  2  3
+4  5  6
+
+
+Memory arrangement:
+1 → 4 → 2 → 5 → 3 → 6
+
+
+
+
+
+
+
+
+
+
+labs.quansight.org
+
+
+4. Difference Between C-Order and Fortran-Order
+Feature	C-Order	Fortran-Order
+Storage	Row-major	Column-major
+Consecutive elements	Same row	Same column
+First dimension	Slower-changing	Faster-changing
+Common usage	Python and C libraries	Fortran numerical libraries
+
+5. What is a Non-Contiguous Array?
+A non-contiguous array does not occupy a single sequential memory region in the order expected by its current shape and strides.
+
+For example, selecting every second column from a matrix can create a non-contiguous view.
+
+This means:
+- Some memory accesses may be less efficient.
+- Certain operations may require copying data.
+- Performance can depend on the memory access pattern.
+6. Why Does Memory Layout Matter?
+Imagine processing millions of numerical values.
+
+If the CPU accesses neighboring memory locations, it can benefit from CPU cache behavior.
+
+This is called cache locality.
+
+Good memory locality can improve performance because nearby values are more likely to be available in faster CPU cache memory.
+
+Key takeaway: Memory layout determines how array elements are physically organized and can significantly influence numerical performance.
+
+Theory 5: Vectorization and Broadcasting
+This is the most important concept for our practical tasks.
+1. What is Vectorization?
+Vectorization means performing operations on entire arrays instead of writing explicit Python loops to process individual elements.
+
+Consider adding two arrays.
+
+Standard Python approach:
+a = [10, 20, 30]b = [1, 2, 3]result = []for i in range(len(a)):    result.append(a[i] + b[i])
+
+
+
+NumPy vectorized approach:
+result = a + b
+
+
+
+Here, assume a and b are NumPy arrays.
+
+Output:
+[11 22 33]
+
+
+The operation applies to all corresponding elements.
+2. Why is Vectorization Faster?
+In ordinary Python loops, each iteration involves Python interpreter overhead.
+
+NumPy performs many numerical operations through optimized compiled implementations.
+
+Therefore, vectorization can significantly reduce execution time for large numerical arrays.
+3. What is Broadcasting?
+Broadcasting is a NumPy mechanism that allows operations between arrays of different shapes when their dimensions are compatible.
+
+It allows NumPy to perform calculations without manually repeating values.
+
+Consider:
+Array A = [10, 20, 30]
+
+Scalar = 5
+
+
+Operation:
+A + 5
+
+
+Result:
+[15, 25, 35]
+
+
+NumPy effectively applies the scalar to every element.
+4. Broadcasting Between Different Dimensions
+Consider:
+A = [[10],
+     [20],
+     [30]]
+
+B = [1, 2, 3]
+
+
+Their shapes are:
+A = (3, 1)
+B = (3,)
+
+
+After broadcasting, they behave as compatible shapes:
+A = [[10, 10, 10],
+     [20, 20, 20],
+     [30, 30, 30]]
+
+B = [[1, 2, 3],
+     [1, 2, 3],
+     [1, 2, 3]]
+
+
+Addition produces:
+[[11, 12, 13],
+ [21, 22, 23],
+ [31, 32, 33]]
+
+
+Notice that we did not manually create these repeated arrays. Broadcasting handles the compatible dimensions conceptually.
+5. Broadcasting Rules
+NumPy compares array dimensions from right to left.
+
+Two dimensions are compatible when:
+1. They are equal.
+2. One of them is 1.
+For example:
+Shape A	Shape B	Compatible?
+(3, 4)	(3, 4)	Yes
+(3, 4)	(1, 4)	Yes
+(3, 4)	(3, 1)	Yes
+(3, 4)	(4,)	Yes
+(3, 4)	(2, 4)	No
+
+6. Broadcasting vs Vectorization
+These concepts are related but different.
+Vectorization	Broadcasting
+Applies operations to arrays efficiently	Allows compatible shapes to work together
+Reduces explicit Python loops	Handles dimension compatibility
+Focuses on efficient computation	Focuses on array shape compatibility
+
+
+6. Financial Computing Concepts
+Our final technical task will use broadcasting and vectorized operations to calculate financial metrics.
+
+Before implementation, understand these two formulas.
+A. Logarithmic Returns
+Logarithmic returns measure the change in an asset's price using the natural logarithm.
+
+Formula:
+\[
+r_t=\ln\left(\frac{P_t}{P_{t-1}}\right)
+\]
+
+Where:
+- \(r_t\) = Logarithmic return.
+- \(P_t\) = Current price.
+- \(P_{t-1}\) = Previous price.
+- \(\ln\) = Natural logarithm.
+Example:
+
+Suppose:
+- Previous price = 100.
+- Current price = 110.
+\[
+r_t=\ln(110/100)
+\]
+
+\[
+r_t=\ln(1.1)
+\]
+
+\[
+r_t\approx0.09531
+\]
+
+The logarithmic return is approximately 9.53%.
+B. Rolling Volatility
+Rolling volatility measures how much returns fluctuate over a moving window of observations.
+
+It is generally calculated using standard deviation.
+
+Population standard deviation:
+\[
+\sigma=\sqrt{\frac{\sum_{i=1}^{n}(r_i-\mu)^2}{n}}
+\]
+
+Where:
+- \(\sigma\) = Volatility.
+- \(r_i\) = Individual return.
+- \(\mu\) = Mean return.
+- \(n\) = Number of observations.
+For financial applications, sample standard deviation may also be used, depending on the methodology.
+
+What does rolling mean?
+
+Suppose we have daily returns:
+[0.02, 0.03, -0.01, 0.04, 0.01]
+
+
+With a rolling window of 3:
+- Window 1: First 3 returns.
+- Window 2: Next 3 returns.
+- Window 3: Last 3 returns.
+Each window produces its own volatility measurement.
+
+Our implementation will use NumPy array operations and broadcasting rather than explicit Python loops.
+
+
+give me sumamry of the technical tasks
+NUMPY_SCIENTIFIC_COMPUTING – Technical Tasks Summary
+We completed and successfully executed 4 technical tasks using NumPy 2.2.6 and Python 3.11.9.
+
+Task 1 – Performance Benchmarking
+Folder: TASK_01_PERFORMANCE_BENCHMARKING
+
+File: Main.py
+
+Objective: Compare the performance of standard Python operations against NumPy vectorized operations.
+
+What we implemented:
+
+Generated 1 million elements using Python lists.
+
+Generated equivalent arrays using np.arange().
+
+Performed element-wise multiplication and addition.
+
+Measured execution time using time.perf_counter().
+
+Calculated the speedup ratio.
+
+Key code:
+
+python_result.append((a[i] * b[i]) + c[i])
+
+numpy_result = (a_np * b_np) + c_np
+
+Benchmark results
+
+Standard Python
+
+296.80 ms
+NumPy
+
+8.17 ms
+36.33×
+NumPy was approximately 36 times faster in this benchmark.
+
+Concepts covered: Vectorization, performance benchmarking, np.arange(), time.perf_counter(), element-wise operations.
+
+Task 2 – N-Dimensional Array Architecture
+Folder: TASK_02_ND_ARRAY_ARCHITECTURE
+
+File: Main.py
+
+Objective: Understand how NumPy creates, organizes, accesses, and reshapes multidimensional arrays.
+
+What we implemented:
+
+Created 1D, 2D, and 3D arrays.
+
+Inspected array dimensions and shapes.
+
+Checked element count, data type, and memory usage.
+
+Practiced indexing and slicing.
+
+Reshaped a 1D array into a 2D array.
+
+Important functions:
+
+Function / Attribute
+
+Purpose
+
+np.array()
+
+Creates NumPy arrays
+
+.ndim
+
+Returns number of dimensions
+
+.shape
+
+Returns array shape
+
+.size
+
+Returns total elements
+
+.dtype
+
+Returns data type
+
+.nbytes
+
+Returns memory usage
+
+.reshape()
+
+Changes array shape
+
+Execution results:
+
+1D array: (5,)
+
+2D array: (3, 3)
+
+3D array: (2, 2, 3)
+
+Reshaped array: (3, 4)
+
+Concepts covered: N-dimensional arrays, array architecture, indexing, slicing, reshaping, array metadata.
+
+Task 3 – Memory Strides and Layouts
+Folder: TASK_03_MEMORY_STRIDES
+
+File: Main.py
+
+Objective: Understand how NumPy stores array elements in memory and how memory layouts affect array operations.
+
+What we implemented:
+
+Created a 2D int64 array.
+
+Inspected memory size and strides.
+
+Checked C-contiguous and Fortran-contiguous layouts.
+
+Transposed an array.
+
+Created a non-contiguous array through slicing.
+
+Compared views and copies.
+
+Converted an array into Fortran memory order.
+
+Important functions and attributes:
+
+Function / Attribute
+
+Purpose
+
+.strides
+
+Shows byte jumps between dimensions
+
+.itemsize
+
+Memory occupied by one element
+
+.flags.c_contiguous
+
+Checks C-contiguous layout
+
+.flags.f_contiguous
+
+Checks Fortran-contiguous layout
+
+.T
+
+Transposes an array
+
+.view()
+
+Creates a view
+
+.copy()
+
+Creates an independent copy
+
+np.shares_memory()
+
+Checks shared memory
+
+np.asfortranarray()
+
+Creates a Fortran-contiguous array
+
+Important execution results:
+
+Array
+
+Strides
+
+Original
+
+(24, 8)
+
+Transposed
+
+(8, 24)
+
+Non-contiguous
+
+(24, 16)
+
+Fortran order
+
+(8, 16)
+
+We also verified:
+
+Original array shares memory with its view.
+
+Original array does not share memory with its copy.
+
+Transposed array has Fortran-contiguous layout in this example.
+
+Concepts covered: Memory strides, contiguous memory, C order, Fortran order, transpose, views, copies, memory sharing.
+
+Task 4 – Financial Metrics Using NumPy Broadcasting
+Folder: TASK_04_FINANCIAL_METRICS
+
+File: Main.py
+
+Objective: Calculate financial metrics using NumPy vectorization, sliding windows, and broadcasting without explicit Python loops.
+
+What we implemented:
+
+Created stock price data.
+
+Calculated logarithmic returns.
+
+Generated overlapping rolling windows.
+
+Calculated the mean of each window.
+
+Applied broadcasting to calculate deviations.
+
+Calculated rolling sample variance and volatility.
+
+Important functions and operations:
+
+Function / Operation
+
+Purpose
+
+np.log()
+
+Calculates natural logarithms
+
+Array slicing
+
+Selects consecutive stock prices
+
+sliding_window_view()
+
+Creates overlapping windows
+
+np.mean()
+
+Calculates window averages
+
+np.newaxis
+
+Adds a new dimension
+
+Broadcasting
+
+Performs operations across compatible shapes
+
+np.sum()
+
+Calculates sum of squared deviations
+
+np.sqrt()
+
+Calculates square root
+
+Important formulas:
+
+Logarithmic returns:
+
+r
+t
+=
+ln
+⁡
+(
+P
+t
+P
+t
+−
+1
+)
+r 
+t
+​
+ =ln( 
+P 
+t−1
+​
+ 
+P 
+t
+​
+ 
+​
+ )
+Sample variance:
+
+s
+2
+=
+∑
+(
+x
+i
+−
+x
+ˉ
+)
+2
+n
+−
+1
+s 
+2
+ = 
+n−1
+∑(x 
+i
+​
+ − 
+x
+ˉ
+ ) 
+2
+ 
+​
+ 
+Rolling volatility:
+
+s
+=
+s
+2
+s= 
+s 
+2
+ 
+​
+ 
+Execution results:
+
+15 stock prices generated.
+
+14 logarithmic returns calculated.
+
+12 overlapping windows generated.
+
+12 window means calculated.
+
+12 rolling volatility values calculated.
+
+Concepts covered: Financial metrics, logarithmic returns, rolling windows, broadcasting, vectorized calculations, sample variance, rolling volatility.
+
+Final project structure
+NUMPY_SCIENTIFIC_COMPUTING/
+│
+├── TASK_01_PERFORMANCE_BENCHMARKING/
+│   └── Main.py
+│
+├── TASK_02_ND_ARRAY_ARCHITECTURE/
+│   └── Main.py
+│
+├── TASK_03_MEMORY_STRIDES/
+│   └── Main.py
+│
+└── TASK_04_FINANCIAL_METRICS/
+    └── Main.py
+Overall technical achievements
+By completing these four tasks, you have practically implemented:
+
+Python vs NumPy performance comparison.
+
+Large-scale array generation and vectorization.
+
+One-dimensional, two-dimensional, and three-dimensional arrays.
+
+Array indexing, slicing, and reshaping.
+
+Array memory inspection and strides.
+
+C-contiguous and Fortran-contiguous layouts.
+
+Array views and independent copies.
+
+Broadcasting and dimension expansion.
+
+Sliding-window calculations.
+
+Logarithmic returns and rolling volatility.
